@@ -22,12 +22,16 @@ def MaxwellRhs2D(Hx, Hy, Ez, malha,time):
     dHy = Hy_flat[malha.vmapM] - Hy_flat[malha.vmapP]
     dEz = Ez_flat[malha.vmapM] - Ez_flat[malha.vmapP]
     
+    
+    #################################################################################################
     # 3. Condição de Contorno: Condutor Elétrico Perfeito (PEC)
     # Na parede (mapB), não há salto magnético, e o salto elétrico reflete perfeitamente
     dHx[malha.mapB] = 0.0
     dHy[malha.mapB] = 0.0
     dEz[malha.mapB] = 2.0 * Ez_flat[malha.vmapB]
+    #################################################################################################
     
+
     # 4. Retorna os saltos para o formato 2D (Nós_da_Face x Elementos) 
     # para podermos multiplicar ponto-a-ponto com os vetores normais
     shape_faces = (malha.Nfp * malha.Nfaces, malha.K)
