@@ -9,7 +9,7 @@ mu0 = 4*np.pi*10**(-7)
 eps0 = 8.854*10**(-12)
 c0 = 1/np.sqrt(eps0*mu0)
 
-def MaxwellRhs2D(Hx, Hy, Ez, malha,time):
+def MaxwellRhs2D_PML(Hx, Hy, Ez, malha,time):
     '''Calcula o fluxo (lado direito) das equações de Maxwell 2D para o modo TM'''
     
     # 1. Achata as matrizes em 1D (ordem Fortran) para os mapas de conectividade funcionarem
@@ -22,7 +22,6 @@ def MaxwellRhs2D(Hx, Hy, Ez, malha,time):
     dHy = Hy_flat[malha.vmapM] - Hy_flat[malha.vmapP]
     dEz = Ez_flat[malha.vmapM] - Ez_flat[malha.vmapP]
     
-    
     #################################################################################################
     # 3. Condição de Contorno: Condutor Elétrico Perfeito (PEC)
     # Na parede (mapB), não há salto magnético, e o salto elétrico reflete perfeitamente
@@ -31,7 +30,6 @@ def MaxwellRhs2D(Hx, Hy, Ez, malha,time):
     dEz[malha.mapB] = 2.0 * Ez_flat[malha.vmapB]
     #################################################################################################
     
-
     # 4. Retorna os saltos para o formato 2D (Nós_da_Face x Elementos) 
     # para podermos multiplicar ponto-a-ponto com os vetores normais
     shape_faces = (malha.Nfp * malha.Nfaces, malha.K)
@@ -57,12 +55,24 @@ def MaxwellRhs2D(Hx, Hy, Ez, malha,time):
     rhsHx = -Ezy + malha.LIFT @ (malha.Fscale * fluxHx) / 2.0
     rhsHy =  Ezx + malha.LIFT @ (malha.Fscale * fluxHy) / 2.0
     rhsEz = CuHz + malha.LIFT @ (malha.Fscale * fluxEz) / 2.0
+
+    ###### Bloco ADE-PML
+    rhsHx -= sigmay*(2*Hx + Py)
+    rhsHy -= sigmax*(2*Hy + Px)
+    rhsEz += dx_sigmax * Qx + dy_sigma_y *Qy
+
+    ######################
+
     f = 3
-    rhsEz += 2*np.pi*f*np.sin(2.0 * np.pi * f * time)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
+    #rhsEz += 2*np.pi*f*np.sin(2.0 * np.pi * f * time)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
+    t0 = 0.5  # Instante em que o pulso atinge o pico
+    tau = 0.1
+
+    rhsEz += -2.0 * (time - t0) / (tau**2) * np.exp(-((time - t0) / tau)**2)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
 
     return rhsHx, rhsHy, rhsEz
 
-def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
+def Maxwell2D_PML(Hx, Hy, Ez, FinalTime, malha):
     '''Integrate TM-mode Maxwell's until FinalTime starting with initial conditions Hx, Hy, Ez'''
     
     # 1. Matrizes do Runge-Kutta de Baixo Armazenamento (5 estágios, 4ª ordem)

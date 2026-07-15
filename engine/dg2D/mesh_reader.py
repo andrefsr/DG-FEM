@@ -71,8 +71,26 @@ def MeshReader2D(nome_arquivo):
     # K é o número total de triângulos
     K = EToV.shape[0]
     
+        # Extrai as coordenadas x e y dos 3 vértices de cada triângulo
+    x1, y1 = VX[EToV[:, 0]], VY[EToV[:, 0]]
+    x2, y2 = VX[EToV[:, 1]], VY[EToV[:, 1]]
+    x3, y3 = VX[EToV[:, 2]], VY[EToV[:, 2]]
+
+    # Calcula o Determinante (Área geométrica direcional)
+    J_geom = (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1)
+
+    # Encontra os índices dos triângulos que estão "do avesso" (J < 0)
+    triangulos_invertidos = np.where(J_geom < 0)[0]
+
+    if len(triangulos_invertidos) > 0:
+        # Para inverter o sentido, basta trocar os nós 2 e 3 de lugar
+        temp = EToV[triangulos_invertidos, 1].copy()
+        EToV[triangulos_invertidos, 1] = EToV[triangulos_invertidos, 2]
+        EToV[triangulos_invertidos, 2] = temp
+
     print(f"Malha carregada com sucesso!")
     print(f"Número de Nós: {len(VX)}")
     print(f"Número de Elementos (K): {K}")
     
     return VX, VY, EToV, BCTags_list
+
