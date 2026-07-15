@@ -9,9 +9,46 @@ mu0 = 4*np.pi*10**(-7)
 eps0 = 8.854*10**(-12)
 c0 = 1/np.sqrt(eps0*mu0)
 
+def sigmas(malha):
+    # Parâmetros da PML
+    p = 4.0           # Grau do polinômio (2 ou 3 são comuns)
+    sigma_max = 500.0  # Força máxima da absorção nas bordas extremas (sigma_0 da imagem)
+    L = 0.5           # Limite do domínio físico (onde a PML começa)
 
+    # Inicializando matrizes de zeros com o tamanho da malha
+    sigmax = np.zeros_like(malha.x)
+    sigmay = np.zeros_like(malha.y)
+    dx_sigmax = np.zeros_like(malha.x)
+    dy_sigmay = np.zeros_like(malha.y)
 
-def MaxwellRhs2D(Hx, Hy, Ez, malha,time):
+    # --- Construindo a Esponja em X ---
+    # Região Direita (x >= 1)
+    mask_rx = malha.x >= L
+    sigmax[mask_rx] = sigma_max * (malha.x[mask_rx] - L)**p
+    dx_sigmax[mask_rx] = p * sigma_max * (malha.x[mask_rx] - L)**(p-1)
+
+    # Região Esquerda (x <= -1)
+    # Usamos np.abs para garantir que a base seja positiva antes de elevar a 'p'
+    mask_lx = malha.x <= -L
+    dist_lx = np.abs(malha.x[mask_lx] + L)
+    sigmax[mask_lx] = sigma_max * (dist_lx)**p
+    dx_sigmax[mask_lx] = -p * sigma_max * (dist_lx)**(p-1) # Derivada direcional em x
+
+    # --- Construindo a Esponja em Y ---
+    # Região Superior (y >= 1)
+    mask_ry = malha.y >= L
+    sigmay[mask_ry] = sigma_max * (malha.y[mask_ry] - L)**p
+    dy_sigmay[mask_ry] = p * sigma_max * (malha.y[mask_ry] - L)**(p-1)
+
+    # Região Inferior (y <= -1)
+    mask_ly = malha.y <= -L
+    dist_ly = np.abs(malha.y[mask_ly] + L)
+    sigmay[mask_ly] = sigma_max * (dist_ly)**p
+    dy_sigmay[mask_ly] = -p * sigma_max * (dist_ly)**(p-1)
+
+    return sigmax, sigmay, dx_sigmax, dy_sigmay
+
+def MaxwellRhs2D(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, time, sigmax, sigmay, dx_sigmax, dy_sigmay):
     '''Calcula o fluxo (lado direito) das equações de Maxwell 2D para o modo TM'''
 
     # 1. Achata as matrizes em 1D (ordem Fortran) para os mapas de conectividade funcionarem
@@ -24,7 +61,6 @@ def MaxwellRhs2D(Hx, Hy, Ez, malha,time):
     dHy = Hy_flat[malha.vmapM] - Hy_flat[malha.vmapP]
     dEz = Ez_flat[malha.vmapM] - Ez_flat[malha.vmapP]
     
-    
     #################################################################################################
     # 3. Condição de Contorno: Condutor Elétrico Perfeito (PEC)
     # Na parede (mapB), não há salto magnético, e o salto elétrico reflete perfeitamente
@@ -33,7 +69,6 @@ def MaxwellRhs2D(Hx, Hy, Ez, malha,time):
     dEz[malha.mapB] = 2.0 * Ez_flat[malha.vmapB]
     #################################################################################################
     
-
     # 4. Retorna os saltos para o formato 2D (Nós_da_Face x Elementos) 
     # para podermos multiplicar ponto-a-ponto com os vetores normais
     shape_faces = (malha.Nfp * malha.Nfaces, malha.K)
@@ -59,14 +94,26 @@ def MaxwellRhs2D(Hx, Hy, Ez, malha,time):
     rhsHx = -Ezy + malha.LIFT @ (malha.Fscale * fluxHx) / 2.0
     rhsHy =  Ezx + malha.LIFT @ (malha.Fscale * fluxHy) / 2.0
     rhsEz = CuHz + malha.LIFT @ (malha.Fscale * fluxEz) / 2.0
-    f = 3
+
+    ###### Bloco ADE-PML
+    rhsPx = sigmax * Hy
+    rhsPy = sigmay * Hx
+    rhsQx = -sigmax * Qx - Hy
+    rhsQy = -sigmay * Qy - Hx
+
+    rhsHx -= sigmay*(2*Hx + Py)
+    rhsHy -= sigmax*(2*Hy + Px)
+    rhsEz += - dx_sigmax * Qx + dy_sigmay *Qy
+
+    ######################
+
     #rhsEz += 2*np.pi*f*np.sin(2.0 * np.pi * f * time)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
     t0 = 0.5  # Instante em que o pulso atinge o pico
-    tau = 0.1
+    tau = 0.2
 
     rhsEz += -2.0 * (time - t0) / (tau**2) * np.exp(-((time - t0) / tau)**2)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
 
-    return rhsHx, rhsHy, rhsEz
+    return rhsHx, rhsHy, rhsEz, rhsPx, rhsPy, rhsQx, rhsQy
 
 def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     '''Integrate TM-mode Maxwell's until FinalTime starting with initial conditions Hx, Hy, Ez'''
@@ -99,24 +146,33 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     ])
 
     time = 0.0
-    passo = 0 # Contador para sabermos quando atualizar a tela
-
-    # --- PREPARAÇÃO DA ANIMAÇÃO ---
-    plt.ion() # Liga o modo interativo do Matplotlib
-    fig, ax = plt.subplots(figsize=(8, 6))
     
+    # Inicia os campos auxiliares
+    Px = np.zeros((malha.Np, malha.K))
+    Py = np.zeros((malha.Np, malha.K))
+    Qx = np.zeros((malha.Np, malha.K))
+    Qy = np.zeros((malha.Np, malha.K))
+
+    # Calcula os mapas de absorção da PML
+    sigmax, sigmay, dx_sigmax, dy_sigmay = sigmas(malha)
+        
+    resPx = np.zeros((malha.Np, malha.K))
+    resPy = np.zeros((malha.Np, malha.K))
+    resQx = np.zeros((malha.Np, malha.K))
+    resQy = np.zeros((malha.Np, malha.K))
+
     # DICA DE OURO: Criar a triangulação uma única vez antes do loop 
     # economiza MUITO processamento!
-    x_flat = malha.x.flatten(order='F')
-    y_flat = malha.y.flatten(order='F')
-    triangulacao = mtri.Triangulation(x_flat, y_flat)
+    #x_flat = malha.x.flatten(order='F')
+    #y_flat = malha.y.flatten(order='F')
+    #triangulacao = mtri.Triangulation(x_flat, y_flat)
     # ------------------------------
     
     # Registradores residuais do RK (só precisamos de um para cada variável)
     resHx = np.zeros((malha.Np, malha.K))
     resHy = np.zeros((malha.Np, malha.K))
     resEz = np.zeros((malha.Np, malha.K))
-    
+
     
     # 2. Cálculo do passo de tempo (CFL)
     # Cuidado: se JacobiGQ retornar (raízes, pesos), garanta que está pegando as raízes
@@ -129,10 +185,9 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     # O passo de tempo básico
     CFL = 0.2
     dt = CFL*np.min(dtscale) * rmin * (2.0/3.0)
-    
-    mask = np.where((malha.x == 0) & (malha.y == 0))
 
-    # 3. O Loop de Tempo Principal
+    pp = []
+    t = []
     while time < FinalTime:
         
         # Trava de segurança: impede que a simulação passe do tempo final desejado
@@ -147,49 +202,34 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
             t_local = time + rk4c[INTRK] * dt
             
             # Chamada do RHS com todas as dependências corretas
-            rhsHx, rhsHy, rhsEz = MaxwellRhs2D(Hx, Hy, Ez, malha,t_local)
+            rhsHx, rhsHy, rhsEz, rhsPx,rhsPy, rhsQx, rhsQy = MaxwellRhs2D(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, t_local, sigmax, sigmay, dx_sigmax, dy_sigmay)
             
             # Atualiza o residual
             resHx = rk4a[INTRK] * resHx + dt * rhsHx
             resHy = rk4a[INTRK] * resHy + dt * rhsHy
             resEz = rk4a[INTRK] * resEz + dt * rhsEz
-            
+            resPx = rk4a[INTRK] * resPx + dt * rhsPx
+            resPy = rk4a[INTRK] * resPy + dt * rhsPy
+            resQx = rk4a[INTRK] * resQx + dt * rhsQx
+            resQy = rk4a[INTRK] * resQy + dt * rhsQy
             
             # Atualiza o campo principal
             Hx = Hx + rk4b[INTRK] * resHx
             Hy = Hy + rk4b[INTRK] * resHy
             Ez = Ez + rk4b[INTRK] * resEz
+            Px = Px + rk4b[INTRK] * resPx
+            Py = Py + rk4b[INTRK] * resPy
+            Qx = Qx + rk4b[INTRK] * resQx
+            Qy = Qy + rk4b[INTRK] * resQy
         
             #Ez[mask] = np.exp(-((time - 1.8e-9*c0)**2  / (0.6e-9*c0)**2))
         # Avança o relógio
+        t.append(time)
         time += dt
-        passo += 1
+        print(f"Tempo atual: {time:.4e} / {FinalTime:.4e}") # Opcional: print para não ficar cego
 
-        # --- ATUALIZAÇÃO DA TELA (A cada 20 passos) ---
-        if passo % 20 == 0:
-            ax.clear() # Limpa o frame antigo
-            
-            Ez_flat = Ez.flatten(order='F')
-
-            tfis_ns = (time/c0)*1e9
-
-            
-            # vmin e vmax são cruciais para a escala de cores não ficar "piscando"
-            ax.tricontourf(triangulacao, Ez_flat, levels=50, cmap='seismic', vmin=-1.0, vmax=1.0)
-            
-            ax.set_title(f'Campo Ez - Tempo: {tfis_ns:.4f} ns')
-            ax.set_aspect('equal')
-            ax.set_xlim([-1, 1])
-            ax.set_ylim([-1, 1])
-            
-            # Pausa minúscula para o Python ter tempo de desenhar na tela
-            plt.pause(0.001) 
-            
-    # --- FINALIZAÇÃO ---
-    plt.ioff() # Desliga o modo interativo quando acabar
-    plt.show() # Mantém a última tela aberta
-        #print(f"Tempo atual: {time:.4e} / {FinalTime:.4e}") # Opcional: print para não ficar cego
-        
-    return Hx, Hy, Ez
+        pp.append(Ez.copy())
+    
+    return Hx, Hy, Ez, pp, t
 
 
