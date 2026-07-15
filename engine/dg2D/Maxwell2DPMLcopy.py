@@ -9,9 +9,49 @@ mu0 = 4*np.pi*10**(-7)
 eps0 = 8.854*10**(-12)
 c0 = 1/np.sqrt(eps0*mu0)
 
-def MaxwellRhs2D_PML(Hx, Hy, Ez, malha,time):
+
+def sigmas(malha):
+    # Parâmetros da PML
+    p = 4.0           # Grau do polinômio (2 ou 3 são comuns)
+    sigma_max = 150.0  # Força máxima da absorção nas bordas extremas (sigma_0 da imagem)
+    L = 0.5           # Limite do domínio físico (onde a PML começa)
+
+    # Inicializando matrizes de zeros com o tamanho da malha
+    sigmax = np.zeros_like(malha.x)
+    sigmay = np.zeros_like(malha.y)
+    dx_sigmax = np.zeros_like(malha.x)
+    dy_sigmay = np.zeros_like(malha.y)
+
+    # --- Construindo a Esponja em X ---
+    # Região Direita (x >= 1)
+    mask_rx = malha.x >= L
+    sigmax[mask_rx] = sigma_max * (malha.x[mask_rx] - L)**p
+    dx_sigmax[mask_rx] = p * sigma_max * (malha.x[mask_rx] - L)**(p-1)
+
+    # Região Esquerda (x <= -1)
+    # Usamos np.abs para garantir que a base seja positiva antes de elevar a 'p'
+    mask_lx = malha.x <= -L
+    dist_lx = np.abs(malha.x[mask_lx] + L)
+    sigmax[mask_lx] = sigma_max * (dist_lx)**p
+    dx_sigmax[mask_lx] = -p * sigma_max * (dist_lx)**(p-1) # Derivada direcional em x
+
+    # --- Construindo a Esponja em Y ---
+    # Região Superior (y >= 1)
+    mask_ry = malha.y >= L
+    sigmay[mask_ry] = sigma_max * (malha.y[mask_ry] - L)**p
+    dy_sigmay[mask_ry] = p * sigma_max * (malha.y[mask_ry] - L)**(p-1)
+
+    # Região Inferior (y <= -1)
+    mask_ly = malha.y <= -L
+    dist_ly = np.abs(malha.y[mask_ly] + L)
+    sigmay[mask_ly] = sigma_max * (dist_ly)**p
+    dy_sigmay[mask_ly] = -p * sigma_max * (dist_ly)**(p-1)
+
+    return sigmax, sigmay, dx_sigmax, dy_sigmay
+
+def MaxwellRhs2D_PML(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, time, sigmax, sigmay, dx_sigmax, dy_sigmay):
     '''Calcula o fluxo (lado direito) das equações de Maxwell 2D para o modo TM'''
-    
+
     # 1. Achata as matrizes em 1D (ordem Fortran) para os mapas de conectividade funcionarem
     Hx_flat = Hx.flatten(order='F')
     Hy_flat = Hy.flatten(order='F')
@@ -57,20 +97,24 @@ def MaxwellRhs2D_PML(Hx, Hy, Ez, malha,time):
     rhsEz = CuHz + malha.LIFT @ (malha.Fscale * fluxEz) / 2.0
 
     ###### Bloco ADE-PML
+    rhsPx = sigmax * Hy
+    rhsPy = sigmay * Hx
+    rhsQx = -sigmax * Qx - Hy
+    rhsQy = -sigmay * Qy - Hx
+
     rhsHx -= sigmay*(2*Hx + Py)
     rhsHy -= sigmax*(2*Hy + Px)
-    rhsEz += dx_sigmax * Qx + dy_sigma_y *Qy
+    rhsEz += dx_sigmax * Qx + dy_sigmay *Qy
 
     ######################
 
-    f = 3
     #rhsEz += 2*np.pi*f*np.sin(2.0 * np.pi * f * time)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
-    t0 = 0.5  # Instante em que o pulso atinge o pico
-    tau = 0.1
+    t0 = 0.3  # Instante em que o pulso atinge o pico
+    tau = 0.2
 
     rhsEz += -2.0 * (time - t0) / (tau**2) * np.exp(-((time - t0) / tau)**2)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
 
-    return rhsHx, rhsHy, rhsEz
+    return rhsHx, rhsHy, rhsEz, rhsPx, rhsPy, rhsQx, rhsQy
 
 def Maxwell2D_PML(Hx, Hy, Ez, FinalTime, malha):
     '''Integrate TM-mode Maxwell's until FinalTime starting with initial conditions Hx, Hy, Ez'''
@@ -105,10 +149,21 @@ def Maxwell2D_PML(Hx, Hy, Ez, FinalTime, malha):
     time = 0.0
     passo = 0 # Contador para sabermos quando atualizar a tela
 
-    # --- PREPARAÇÃO DA ANIMAÇÃO ---
-    plt.ion() # Liga o modo interativo do Matplotlib
-    fig, ax = plt.subplots(figsize=(8, 6))
-    
+    # Inicia os campos auxiliares
+    Px = np.zeros((malha.Np, malha.K))
+    Py = np.zeros((malha.Np, malha.K))
+    Qx = np.zeros((malha.Np, malha.K))
+    Qy = np.zeros((malha.Np, malha.K))
+
+    # Calcula os mapas de absorção da PML
+    sigmax, sigmay, dx_sigmax, dy_sigmay = sigmas(malha)
+
+    ani = False
+    if ani == True:
+        # --- PREPARAÇÃO DA ANIMAÇÃO ---
+        plt.ion() # Liga o modo interativo do Matplotlib
+        fig, ax = plt.subplots(figsize=(8, 6))
+        
     # DICA DE OURO: Criar a triangulação uma única vez antes do loop 
     # economiza MUITO processamento!
     x_flat = malha.x.flatten(order='F')
@@ -120,6 +175,10 @@ def Maxwell2D_PML(Hx, Hy, Ez, FinalTime, malha):
     resHx = np.zeros((malha.Np, malha.K))
     resHy = np.zeros((malha.Np, malha.K))
     resEz = np.zeros((malha.Np, malha.K))
+    resPx = np.zeros((malha.Np, malha.K))
+    resPy = np.zeros((malha.Np, malha.K))
+    resQx = np.zeros((malha.Np, malha.K))
+    resQy = np.zeros((malha.Np, malha.K))
     
     # 2. Cálculo do passo de tempo (CFL)
     # Cuidado: se JacobiGQ retornar (raízes, pesos), garanta que está pegando as raízes
@@ -150,25 +209,34 @@ def Maxwell2D_PML(Hx, Hy, Ez, FinalTime, malha):
             t_local = time + rk4c[INTRK] * dt
             
             # Chamada do RHS com todas as dependências corretas
-            rhsHx, rhsHy, rhsEz = MaxwellRhs2D(Hx, Hy, Ez, malha,t_local)
+            rhsHx, rhsHy, rhsEz, rhsPx,rhsPy, rhsQx, rhsQy = MaxwellRhs2D_PML(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, t_local, sigmax, sigmay, dx_sigmax, dy_sigmay)
             
             # Atualiza o residual
             resHx = rk4a[INTRK] * resHx + dt * rhsHx
             resHy = rk4a[INTRK] * resHy + dt * rhsHy
             resEz = rk4a[INTRK] * resEz + dt * rhsEz
+            resPx = rk4a[INTRK] * resPx + dt * rhsPx
+            resPy = rk4a[INTRK] * resPy + dt * rhsPy
+            resQx = rk4a[INTRK] * resQx + dt * rhsQx
+            resQy = rk4a[INTRK] * resQy + dt * rhsQy
             
             # Atualiza o campo principal
             Hx = Hx + rk4b[INTRK] * resHx
             Hy = Hy + rk4b[INTRK] * resHy
             Ez = Ez + rk4b[INTRK] * resEz
+            Px = Px + rk4b[INTRK] * resPx
+            Py = Py + rk4b[INTRK] * resPy
+            Qx = Qx + rk4b[INTRK] * resQx
+            Qy = Qy + rk4b[INTRK] * resQy
         
             #Ez[mask] = np.exp(-((time - 1.8e-9*c0)**2  / (0.6e-9*c0)**2))
         # Avança o relógio
         time += dt
         passo += 1
+        print(f"Tempo atual: {time:.4e} / {FinalTime:.4e}") # Opcional: print para não ficar cego
 
         # --- ATUALIZAÇÃO DA TELA (A cada 20 passos) ---
-        if passo % 20 == 0:
+        if passo % 20 == 0 and ani == True:
             ax.clear() # Limpa o frame antigo
             
             Ez_flat = Ez.flatten(order='F')
@@ -186,11 +254,11 @@ def Maxwell2D_PML(Hx, Hy, Ez, FinalTime, malha):
             
             # Pausa minúscula para o Python ter tempo de desenhar na tela
             plt.pause(0.001) 
-            
-    # --- FINALIZAÇÃO ---
-    plt.ioff() # Desliga o modo interativo quando acabar
-    plt.show() # Mantém a última tela aberta
-        #print(f"Tempo atual: {time:.4e} / {FinalTime:.4e}") # Opcional: print para não ficar cego
+
+    if ani == True:      
+        # --- FINALIZAÇÃO ---
+        plt.ioff() # Desliga o modo interativo quando acabar
+        plt.show() # Mantém a última tela aberta
         
     return Hx, Hy, Ez
 

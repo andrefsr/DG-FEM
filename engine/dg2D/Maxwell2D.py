@@ -9,9 +9,11 @@ mu0 = 4*np.pi*10**(-7)
 eps0 = 8.854*10**(-12)
 c0 = 1/np.sqrt(eps0*mu0)
 
+
+
 def MaxwellRhs2D(Hx, Hy, Ez, malha,time):
     '''Calcula o fluxo (lado direito) das equações de Maxwell 2D para o modo TM'''
-    
+
     # 1. Achata as matrizes em 1D (ordem Fortran) para os mapas de conectividade funcionarem
     Hx_flat = Hx.flatten(order='F')
     Hy_flat = Hy.flatten(order='F')
@@ -115,6 +117,7 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     resHy = np.zeros((malha.Np, malha.K))
     resEz = np.zeros((malha.Np, malha.K))
     
+    
     # 2. Cálculo do passo de tempo (CFL)
     # Cuidado: se JacobiGQ retornar (raízes, pesos), garanta que está pegando as raízes
     rLGL, _ = aux.JacobiGQ(0, 0, malha.N) 
@@ -150,6 +153,7 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
             resHx = rk4a[INTRK] * resHx + dt * rhsHx
             resHy = rk4a[INTRK] * resHy + dt * rhsHy
             resEz = rk4a[INTRK] * resEz + dt * rhsEz
+            
             
             # Atualiza o campo principal
             Hx = Hx + rk4b[INTRK] * resHx

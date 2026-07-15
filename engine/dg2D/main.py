@@ -5,6 +5,8 @@ import operators2D as op2D
 import mesh_reader as msh
 import matplotlib.pyplot as plt
 
+import Maxwell2DPMLcopy as pml
+
 
 ### Driver Script for solving the 2D vacuum Maxwell's equations on TM form
 
@@ -22,7 +24,8 @@ Hx = np.zeros((malha.Np,malha.K))
 Hy = np.zeros((malha.Np,malha.K))
 
 FinalTime = 10
-Hx, Hy, Ez = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
+#Hx, Hy, Ez = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
+Hx, Hy, Ez = pml.Maxwell2D_PML(Hx,Hy,Ez,FinalTime,malha)
 
 
 ###########################################################################################################################
