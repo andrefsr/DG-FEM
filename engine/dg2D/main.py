@@ -68,7 +68,7 @@ if node == True:
 
     plt.show()
 
-ani = False
+ani = True
 if ani == True:
     c0 = 299792458.0 # Velocidade da luz para o tempo físico
 

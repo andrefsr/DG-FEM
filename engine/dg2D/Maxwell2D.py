@@ -48,7 +48,7 @@ def sigmas(malha):
 
     return sigmax, sigmay, dx_sigmax, dy_sigmay
 
-def MaxwellRhs2D(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, time, sigmax, sigmay, dx_sigmax, dy_sigmay):
+def MaxwellRhs2D_PML(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, time, sigmax, sigmay, dx_sigmax, dy_sigmay):
     '''Calcula o fluxo (lado direito) das equações de Maxwell 2D para o modo TM'''
 
     # 1. Achata as matrizes em 1D (ordem Fortran) para os mapas de conectividade funcionarem
@@ -115,6 +115,61 @@ def MaxwellRhs2D(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, time, sigmax, sigmay, dx_sig
 
     return rhsHx, rhsHy, rhsEz, rhsPx, rhsPy, rhsQx, rhsQy
 
+def MaxwellRhs2D_PEC(Hx, Hy, Ez, malha, time):
+    '''Calcula o fluxo (lado direito) das equações de Maxwell 2D para o modo TM'''
+
+    # 1. Achata as matrizes em 1D (ordem Fortran) para os mapas de conectividade funcionarem
+    Hx_flat = Hx.flatten(order='F')
+    Hy_flat = Hy.flatten(order='F')
+    Ez_flat = Ez.flatten(order='F')
+    
+    # 2. Calcula o salto (Minus - Plus) nas faces
+    dHx = Hx_flat[malha.vmapM] - Hx_flat[malha.vmapP]
+    dHy = Hy_flat[malha.vmapM] - Hy_flat[malha.vmapP]
+    dEz = Ez_flat[malha.vmapM] - Ez_flat[malha.vmapP]
+    
+    #################################################################################################
+    # 3. Condição de Contorno: Condutor Elétrico Perfeito (PEC)
+    # Na parede (mapB), não há salto magnético, e o salto elétrico reflete perfeitamente
+    dHx[malha.mapB] = 0.0
+    dHy[malha.mapB] = 0.0
+    dEz[malha.mapB] = 2.0 * Ez_flat[malha.vmapB]
+    #################################################################################################
+    
+    # 4. Retorna os saltos para o formato 2D (Nós_da_Face x Elementos) 
+    # para podermos multiplicar ponto-a-ponto com os vetores normais
+    shape_faces = (malha.Nfp * malha.Nfaces, malha.K)
+    dHx = dHx.reshape(shape_faces, order='F')
+    dHy = dHy.reshape(shape_faces, order='F')
+    dEz = dEz.reshape(shape_faces, order='F')
+    
+    # 5. Fluxos de Fronteira (Upwind)
+    alpha = 1.0
+    ndotdH = malha.nx * dHx + malha.ny * dHy
+    
+    fluxHx =  malha.ny * dEz + alpha * (ndotdH * malha.nx - dHx)
+    fluxHy = -malha.nx * dEz + alpha * (ndotdH * malha.ny - dHy) # Corrigido para -dHy
+    fluxEz = -malha.nx * dHy + malha.ny * dHx - alpha * dEz
+    
+    # 6. Derivadas Locais (Operadores de Volume)
+    # Agora passamos os argumentos que elas exigem
+    Ezx, Ezy = op2D.Grad2D(Ez, malha.rx, malha.sx, malha.ry, malha.sy, malha.Dr, malha.Ds)
+    CuHx, CuHy, CuHz = op2D.Curl2D(Hx, Hy, None, malha.rx, malha.sx, malha.ry, malha.sy, malha.Dr, malha.Ds)
+    
+    # 7. Montagem do RHS final: Volume + Fluxo(Borda)
+    # Correção: LIFT exige multiplicação de matriz (@)
+    rhsHx = -Ezy + malha.LIFT @ (malha.Fscale * fluxHx) / 2.0
+    rhsHy =  Ezx + malha.LIFT @ (malha.Fscale * fluxHy) / 2.0
+    rhsEz = CuHz + malha.LIFT @ (malha.Fscale * fluxEz) / 2.0
+
+    #rhsEz += 2*np.pi*f*np.sin(2.0 * np.pi * f * time)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
+    t0 = 0.5  # Instante em que o pulso atinge o pico
+    tau = 0.2
+
+    rhsEz += -2.0 * (time - t0) / (tau**2) * np.exp(-((time - t0) / tau)**2)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
+
+    return rhsHx, rhsHy, rhsEz
+
 def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     '''Integrate TM-mode Maxwell's until FinalTime starting with initial conditions Hx, Hy, Ez'''
     
@@ -146,20 +201,21 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     ])
 
     time = 0.0
-    
-    # Inicia os campos auxiliares
-    Px = np.zeros((malha.Np, malha.K))
-    Py = np.zeros((malha.Np, malha.K))
-    Qx = np.zeros((malha.Np, malha.K))
-    Qy = np.zeros((malha.Np, malha.K))
+    apml = True
+    if apml == True:
+        # Inicia os campos auxiliares
+        Px = np.zeros((malha.Np, malha.K))
+        Py = np.zeros((malha.Np, malha.K))
+        Qx = np.zeros((malha.Np, malha.K))
+        Qy = np.zeros((malha.Np, malha.K))
 
-    # Calcula os mapas de absorção da PML
-    sigmax, sigmay, dx_sigmax, dy_sigmay = sigmas(malha)
+        # Calcula os mapas de absorção da PML
+        sigmax, sigmay, dx_sigmax, dy_sigmay = sigmas(malha)
         
-    resPx = np.zeros((malha.Np, malha.K))
-    resPy = np.zeros((malha.Np, malha.K))
-    resQx = np.zeros((malha.Np, malha.K))
-    resQy = np.zeros((malha.Np, malha.K))
+        resPx = np.zeros((malha.Np, malha.K))
+        resPy = np.zeros((malha.Np, malha.K))
+        resQx = np.zeros((malha.Np, malha.K))
+        resQy = np.zeros((malha.Np, malha.K))
 
     # DICA DE OURO: Criar a triangulação uma única vez antes do loop 
     # economiza MUITO processamento!
@@ -172,7 +228,6 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     resHx = np.zeros((malha.Np, malha.K))
     resHy = np.zeros((malha.Np, malha.K))
     resEz = np.zeros((malha.Np, malha.K))
-
     
     # 2. Cálculo do passo de tempo (CFL)
     # Cuidado: se JacobiGQ retornar (raízes, pesos), garanta que está pegando as raízes
@@ -202,25 +257,32 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
             t_local = time + rk4c[INTRK] * dt
             
             # Chamada do RHS com todas as dependências corretas
-            rhsHx, rhsHy, rhsEz, rhsPx,rhsPy, rhsQx, rhsQy = MaxwellRhs2D(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, t_local, sigmax, sigmay, dx_sigmax, dy_sigmay)
-            
+            if apml == True:
+                rhsHx, rhsHy, rhsEz, rhsPx,rhsPy, rhsQx, rhsQy = MaxwellRhs2D_PML(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, t_local, sigmax, sigmay, dx_sigmax, dy_sigmay)
+            else:
+                rhsHx, rhsHy, rhsEz = MaxwellRhs2D_PEC(Hx,Hy,Ez,malha,t_local)
             # Atualiza o residual
+
             resHx = rk4a[INTRK] * resHx + dt * rhsHx
             resHy = rk4a[INTRK] * resHy + dt * rhsHy
             resEz = rk4a[INTRK] * resEz + dt * rhsEz
-            resPx = rk4a[INTRK] * resPx + dt * rhsPx
-            resPy = rk4a[INTRK] * resPy + dt * rhsPy
-            resQx = rk4a[INTRK] * resQx + dt * rhsQx
-            resQy = rk4a[INTRK] * resQy + dt * rhsQy
+
+            if apml == True:
+                resPx = rk4a[INTRK] * resPx + dt * rhsPx
+                resPy = rk4a[INTRK] * resPy + dt * rhsPy
+                resQx = rk4a[INTRK] * resQx + dt * rhsQx
+                resQy = rk4a[INTRK] * resQy + dt * rhsQy
             
             # Atualiza o campo principal
             Hx = Hx + rk4b[INTRK] * resHx
             Hy = Hy + rk4b[INTRK] * resHy
             Ez = Ez + rk4b[INTRK] * resEz
-            Px = Px + rk4b[INTRK] * resPx
-            Py = Py + rk4b[INTRK] * resPy
-            Qx = Qx + rk4b[INTRK] * resQx
-            Qy = Qy + rk4b[INTRK] * resQy
+
+            if apml == True:
+                Px = Px + rk4b[INTRK] * resPx
+                Py = Py + rk4b[INTRK] * resPy
+                Qx = Qx + rk4b[INTRK] * resQx
+                Qy = Qy + rk4b[INTRK] * resQy
         
             #Ez[mask] = np.exp(-((time - 1.8e-9*c0)**2  / (0.6e-9*c0)**2))
         # Avança o relógio
