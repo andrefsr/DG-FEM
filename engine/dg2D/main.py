@@ -9,26 +9,29 @@ import matplotlib.tri as mtri
 
 ### Driver Script for solving the 2D vacuum Maxwell's equations on TM form
 
-N = 4
+N = 6
 
 VX, VY, EToV, BCTags = msh.MeshReader2D('engine/dg2D/cavidade quadrada.msh')
 
 malha = stp.StartUp2D(N,EToV,VX,VY)
 
 ### Condições iniciais
-#Ez = np.sin(np.pi*malha.x)*np.sin(np.pi*malha.y)
-Ez = np.zeros((malha.Np,malha.K))
+Ez = np.sin(np.pi*malha.x)*np.sin(np.pi*malha.y)
+#Ez = np.zeros((malha.Np,malha.K))
 #Ez = np.exp(-(malha.x**2 + malha.y**2) / (0.1**2))
 Hx = np.zeros((malha.Np,malha.K))
 Hy = np.zeros((malha.Np,malha.K))
 
-FinalTime = 5
+FinalTime = 0.5
 #Hx, Hy, Ez = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
 Hx, Hy, Ez, pp, t = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
 
 
 ###########################################################################################################################
 
+
+print('N da malha', malha.N)
+print('N real', N)
 
 x_plot = malha.x.flatten(order='F')
 y_plot = malha.y.flatten(order='F')
@@ -49,7 +52,7 @@ plt.tight_layout()
 
 plt.show()
 
-node = False
+node = True
 if node == True:
     x_nos = malha.x.flatten(order='F')
     y_nos = malha.y.flatten(order='F')
@@ -68,7 +71,7 @@ if node == True:
 
     plt.show()
 
-ani = True
+ani = False
 if ani == True:
     c0 = 299792458.0 # Velocidade da luz para o tempo físico
 
@@ -128,3 +131,36 @@ if ani == True:
 
     print("\nRenderização concluída! Arquivo 'propagacao_pml.gif' salvo com sucesso.")
     plt.close(fig) # Limpa a memória
+
+######## Solução teórica
+
+Ez_analitico = np.sin(np.pi*malha.x)*np.sin(np.pi*malha.y)*np.cos(np.sqrt(2)*np.pi*FinalTime)
+
+x_plot2 = malha.x.flatten(order='F')
+y_plot2 = malha.y.flatten(order='F')
+Ez_plot2 = Ez_analitico.flatten(order='F')
+
+plt.figure(figsize=(8, 6))
+plt.title(f'Campo Elétrico (Ez) analítico em t = {FinalTime}')
+
+grafico = plt.tricontourf(x_plot2, y_plot2, Ez_plot2, levels=100, cmap='seismic')
+plt.colorbar(grafico, label='Amplitude Ez')
+
+plt.xlabel('x')
+plt.ylabel('y')
+plt.axis('equal')
+plt.tight_layout()
+
+plt.show()
+
+# 2. Norma L-infinito (Erro Máximo Absoluto)
+# Ótimo para ver se existe algum "pico" de erro escondido em algum triângulo
+erro_Linf = np.max(np.abs(Ez - Ez_analitico))
+
+# 3. Norma L2 Relativa (A mais usada em artigos científicos)
+# Mostra o erro percentual global de energia na malha
+erro_L2 = np.linalg.norm(Ez - Ez_analitico) / np.linalg.norm(Ez_analitico)
+
+print(f"--- Análise de Erro (t = {FinalTime:.4f}) ---")
+print(f"Norma L-infinito (Máx): {erro_Linf:.4e}")
+print(f"Norma L2 Relativa:      {erro_L2:.4e}")

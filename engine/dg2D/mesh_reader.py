@@ -89,7 +89,7 @@ def MeshReader2D(nome_arquivo):
         EToV[triangulos_invertidos, 2] = temp
 
     print(f"Malha carregada com sucesso!")
-    print(f"Número de Nós: {len(VX)}")
+    print(f"Número de vértices: {len(VX)}")
     print(f"Número de Elementos (K): {K}")
     
     return VX, VY, EToV, BCTags_list

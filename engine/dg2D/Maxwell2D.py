@@ -108,10 +108,10 @@ def MaxwellRhs2D_PML(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, time, sigmax, sigmay, dx
     ######################
 
     #rhsEz += 2*np.pi*f*np.sin(2.0 * np.pi * f * time)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
-    t0 = 0.5  # Instante em que o pulso atinge o pico
-    tau = 0.2
+    #t0 = 0.5  # Instante em que o pulso atinge o pico
+    #tau = 0.2
 
-    rhsEz += -2.0 * (time - t0) / (tau**2) * np.exp(-((time - t0) / tau)**2)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
+    #rhsEz += -2.0 * (time - t0) / (tau**2) * np.exp(-((time - t0) / tau)**2)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
 
     return rhsHx, rhsHy, rhsEz, rhsPx, rhsPy, rhsQx, rhsQy
 
@@ -163,10 +163,10 @@ def MaxwellRhs2D_PEC(Hx, Hy, Ez, malha, time):
     rhsEz = CuHz + malha.LIFT @ (malha.Fscale * fluxEz) / 2.0
 
     #rhsEz += 2*np.pi*f*np.sin(2.0 * np.pi * f * time)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
-    t0 = 0.5  # Instante em que o pulso atinge o pico
-    tau = 0.2
+    #t0 = 0.5  # Instante em que o pulso atinge o pico
+    #tau = 0.2
 
-    rhsEz += -2.0 * (time - t0) / (tau**2) * np.exp(-((time - t0) / tau)**2)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
+    #rhsEz += -2.0 * (time - t0) / (tau**2) * np.exp(-((time - t0) / tau)**2)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
 
     return rhsHx, rhsHy, rhsEz
 
@@ -201,7 +201,7 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     ])
 
     time = 0.0
-    apml = True
+    apml = False
     if apml == True:
         # Inicia os campos auxiliares
         Px = np.zeros((malha.Np, malha.K))
@@ -288,7 +288,7 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
         # Avança o relógio
         t.append(time)
         time += dt
-        print(f"Tempo atual: {time:.4e} / {FinalTime:.4e}") # Opcional: print para não ficar cego
+        #print(f"Tempo atual: {time:.4e} / {FinalTime:.4e}") # Opcional: print para não ficar cego
 
         pp.append(Ez.copy())
     
