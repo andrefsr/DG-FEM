@@ -144,7 +144,7 @@ def MaxwellRhs2D_PEC(Hx, Hy, Ez, malha, time):
     dEz = dEz.reshape(shape_faces, order='F')
     
     # 5. Fluxos de Fronteira (Upwind)
-    alpha = 1.0
+    alpha = 0.0
     ndotdH = malha.nx * dHx + malha.ny * dHy
     
     fluxHx =  malha.ny * dEz + alpha * (ndotdH * malha.nx - dHx)
@@ -174,31 +174,10 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     '''Integrate TM-mode Maxwell's until FinalTime starting with initial conditions Hx, Hy, Ez'''
     
     # 1. Matrizes do Runge-Kutta de Baixo Armazenamento (5 estágios, 4ª ordem)
-    rk4a = np.array([
-        0.0, 
-        -567301805773.0 / 1357537059087.0, 
-        -2404267990393.0 / 2016746695238.0, 
-        -3550918686646.0 / 2091501179385.0, 
-        -3270041081375.0 / 2362478004168.0
-    ])
-    
-    rk4b = np.array([
-        1432997174477.0 / 9575080441755.0, 
-        5161836677717.0 / 13612068292357.0, 
-        1720146321549.0 / 2090206949498.0, 
-        3134564353537.0 / 4481467310338.0, 
-        2277821191437.0 / 14882151754819.0
-    ])
-    
-    # A matriz rk4c é usada se o seu lado direito (RHS) depender 
-    # do tempo absoluto (como fontes de antena pulsantes t=time+rk4c[INTRK]*dt)
-    rk4c = np.array([
-        0.0, 
-        1432997174477.0 / 9575080441755.0, 
-        2526269341429.0 / 6820363962896.0, 
-        2006345519317.0 / 3224310063776.0, 
-        2802321613138.0 / 2924317926251.0
-    ])
+    rk4a = np.array([0.0, -567301805773.0 / 1357537059087.0, -2404267990393.0 / 2016746695238.0, -3550918686646.0 / 2091501179385.0, -3270041081375.0 / 2362478004168.0])
+    rk4b = np.array([1432997174477.0 / 9575080441755.0, 5161836677717.0 / 13612068292357.0, 1720146321549.0 / 2090206949498.0, 3134564353537.0 / 4481467310338.0, 2277821191437.0 / 14882151754819.0])
+    # A matriz rk4c é usada se o seu lado direito (RHS) depender do tempo absoluto (como fontes de antena pulsantes t=time+rk4c[INTRK]*dt)
+    rk4c = np.array([0.0, 1432997174477.0 / 9575080441755.0, 2526269341429.0 / 6820363962896.0, 2006345519317.0 / 3224310063776.0, 2802321613138.0 / 2924317926251.0])
 
     time = 0.0
     apml = False
@@ -243,11 +222,12 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
 
     pp = []
     t = []
+    passo = 0
     while time < FinalTime:
         
         # Trava de segurança: impede que a simulação passe do tempo final desejado
-        if time + dt > FinalTime:
-            dt = FinalTime - time
+        #if time + dt > FinalTime:
+        #    dt = FinalTime - time
             
         # Loop do Runge-Kutta (Agora com 5 estágios)
         for INTRK in range(5):
@@ -284,13 +264,20 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
                 Qx = Qx + rk4b[INTRK] * resQx
                 Qy = Qy + rk4b[INTRK] * resQy
         
-            #Ez[mask] = np.exp(-((time - 1.8e-9*c0)**2  / (0.6e-9*c0)**2))
-        # Avança o relógio
-        t.append(time)
         time += dt
-        #print(f"Tempo atual: {time:.4e} / {FinalTime:.4e}") # Opcional: print para não ficar cego
+        passo += 1
 
-        pp.append(Ez.copy())
+        # Opcional: print para não ficar cego (atualiza a cada 50 passos para não poluir o terminal)
+        if passo % 50 == 0:
+            print(f"Tempo atual: {time:.4e} / {FinalTime:.4e}") 
+            
+        # Salva para a animação apenas a cada 10 passos!
+        if passo % 5 == 0:
+            t.append(time)
+            pp.append(Ez.copy())
+
+    t.append(time)
+    pp.append(Ez.copy())
     
     return Hx, Hy, Ez, pp, t
 

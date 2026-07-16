@@ -7,9 +7,15 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.tri as mtri
 
+# --- O SEGREDO PARA ATUALIZAR ARQUIVOS EXTERNOS ---
+#import importlib
+#import Maxwell2D as Max
+#importlib.reload(Max)  # Força o Python a ler as alterações salvas!
+# --------------------------------------------------
+
 ### Driver Script for solving the 2D vacuum Maxwell's equations on TM form
 
-N = 6
+N = 5
 
 VX, VY, EToV, BCTags = msh.MeshReader2D('engine/dg2D/cavidade quadrada.msh')
 
@@ -26,12 +32,12 @@ FinalTime = 0.5
 #Hx, Hy, Ez = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
 Hx, Hy, Ez, pp, t = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
 
-
+print('t final', t[-1])
 ###########################################################################################################################
 
 
-print('N da malha', malha.N)
-print('N real', N)
+#print(f"Ordem Polinomial (N): {malha.N}")
+#print(f"Nós de Interpolação por Triângulo (Np): {malha.Np}")
 
 x_plot = malha.x.flatten(order='F')
 y_plot = malha.y.flatten(order='F')
@@ -52,7 +58,7 @@ plt.tight_layout()
 
 plt.show()
 
-node = True
+node = False
 if node == True:
     x_nos = malha.x.flatten(order='F')
     y_nos = malha.y.flatten(order='F')
@@ -71,7 +77,7 @@ if node == True:
 
     plt.show()
 
-ani = False
+ani = True
 if ani == True:
     c0 = 299792458.0 # Velocidade da luz para o tempo físico
 
@@ -127,40 +133,8 @@ if ani == True:
     )
 
     # Salva como GIF usando o Pillow (já vem no Python)
-    animacao.save('propagacao_pml.gif', writer='pillow', fps=10, dpi=100)
+    animacao.save('propagacao_pml.gif', writer='pillow', fps=7, dpi=100)
 
     print("\nRenderização concluída! Arquivo 'propagacao_pml.gif' salvo com sucesso.")
     plt.close(fig) # Limpa a memória
 
-######## Solução teórica
-
-Ez_analitico = np.sin(np.pi*malha.x)*np.sin(np.pi*malha.y)*np.cos(np.sqrt(2)*np.pi*FinalTime)
-
-x_plot2 = malha.x.flatten(order='F')
-y_plot2 = malha.y.flatten(order='F')
-Ez_plot2 = Ez_analitico.flatten(order='F')
-
-plt.figure(figsize=(8, 6))
-plt.title(f'Campo Elétrico (Ez) analítico em t = {FinalTime}')
-
-grafico = plt.tricontourf(x_plot2, y_plot2, Ez_plot2, levels=100, cmap='seismic')
-plt.colorbar(grafico, label='Amplitude Ez')
-
-plt.xlabel('x')
-plt.ylabel('y')
-plt.axis('equal')
-plt.tight_layout()
-
-plt.show()
-
-# 2. Norma L-infinito (Erro Máximo Absoluto)
-# Ótimo para ver se existe algum "pico" de erro escondido em algum triângulo
-erro_Linf = np.max(np.abs(Ez - Ez_analitico))
-
-# 3. Norma L2 Relativa (A mais usada em artigos científicos)
-# Mostra o erro percentual global de energia na malha
-erro_L2 = np.linalg.norm(Ez - Ez_analitico) / np.linalg.norm(Ez_analitico)
-
-print(f"--- Análise de Erro (t = {FinalTime:.4f}) ---")
-print(f"Norma L-infinito (Máx): {erro_Linf:.4e}")
-print(f"Norma L2 Relativa:      {erro_L2:.4e}")

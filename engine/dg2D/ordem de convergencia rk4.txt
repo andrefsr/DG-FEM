@@ -1,0 +1,38 @@
+
+t = 1
+
+CFL: 0.05
+Norma L-infinito (Máx): 4.1188e-02
+Norma L2 Relativa:      1.5531e-01
+
+CFL: 0.1
+orma L-infinito (Máx): 4.1183e-02
+Norma L2 Relativa:      1.5529e-01
+
+CFL: 0.2
+Norma L-infinito (Máx): 4.1171e-02
+Norma L2 Relativa:      1.5524e-01
+
+CFL: 0.4
+Norma L-infinito (Máx): 4.1146e-02
+Norma L2 Relativa:      1.5515e-01
+
+----------------------------------
+
+t = 0.01
+
+CFL: 0.05
+Norma L-infinito (Máx): 1.8818e-05
+Norma L2 Relativa:      1.8832e-05
+
+CFL: 0.1
+Norma L-infinito (Máx): 1.8555e-05
+Norma L2 Relativa:      1.8568e-05
+
+CFL: 0.2
+Norma L-infinito (Máx): 1.8029e-05
+Norma L2 Relativa:      1.8042e-05
+
+CFL: 0.4
+Norma L-infinito (Máx): 2.2515e-05
+Norma L2 Relativa:      2.2539e-05
