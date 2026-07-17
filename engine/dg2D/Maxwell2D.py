@@ -106,7 +106,7 @@ def MaxwellRhs2D_PML(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, time, sigmax, sigmay, dx
     rhsEz += - dx_sigmax * Qx + dy_sigmay *Qy
 
     ######################
-
+    #f = 2
     #rhsEz += 2*np.pi*f*np.sin(2.0 * np.pi * f * time)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
     #t0 = 0.5  # Instante em que o pulso atinge o pico
     #tau = 0.2
@@ -144,7 +144,7 @@ def MaxwellRhs2D_PEC(Hx, Hy, Ez, malha, time):
     dEz = dEz.reshape(shape_faces, order='F')
     
     # 5. Fluxos de Fronteira (Upwind)
-    alpha = 0.0
+    alpha = 1.0
     ndotdH = malha.nx * dHx + malha.ny * dHy
     
     fluxHx =  malha.ny * dEz + alpha * (ndotdH * malha.nx - dHx)
@@ -267,18 +267,16 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
         time += dt
         passo += 1
 
-        # Opcional: print para não ficar cego (atualiza a cada 50 passos para não poluir o terminal)
-        if passo % 50 == 0:
+        if passo % 5 == 0:
             print(f"Tempo atual: {time:.4e} / {FinalTime:.4e}") 
             
-        # Salva para a animação apenas a cada 10 passos!
-        if passo % 5 == 0:
+        if passo % 2 == 0:
             t.append(time)
             pp.append(Ez.copy())
 
     t.append(time)
     pp.append(Ez.copy())
-    
+    print('passos =',passo)
     return Hx, Hy, Ez, pp, t
 
 

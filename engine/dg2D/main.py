@@ -28,7 +28,7 @@ Ez = np.sin(np.pi*malha.x)*np.sin(np.pi*malha.y)
 Hx = np.zeros((malha.Np,malha.K))
 Hy = np.zeros((malha.Np,malha.K))
 
-FinalTime = 0.5
+FinalTime = 0.1
 #Hx, Hy, Ez = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
 Hx, Hy, Ez, pp, t = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
 
@@ -77,7 +77,7 @@ if node == True:
 
     plt.show()
 
-ani = True
+ani = False
 if ani == True:
     c0 = 299792458.0 # Velocidade da luz para o tempo físico
 
@@ -133,7 +133,7 @@ if ani == True:
     )
 
     # Salva como GIF usando o Pillow (já vem no Python)
-    animacao.save('propagacao_pml.gif', writer='pillow', fps=7, dpi=100)
+    animacao.save('propagacao_pml.gif', writer='pillow', fps=15, dpi=100)
 
     print("\nRenderização concluída! Arquivo 'propagacao_pml.gif' salvo com sucesso.")
     plt.close(fig) # Limpa a memória

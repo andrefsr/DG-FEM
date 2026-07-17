@@ -92,5 +92,8 @@ def MeshReader2D(nome_arquivo):
     print(f"Número de vértices: {len(VX)}")
     print(f"Número de Elementos (K): {K}")
     
+    VX = np.array(VX, dtype=np.float64)
+    VY = np.array(VY, dtype=np.float64)
+
     return VX, VY, EToV, BCTags_list
 
