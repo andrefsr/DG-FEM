@@ -22,6 +22,7 @@ def Normals2D(x, y, Dr, Ds, Fmask, N):
     """
     Calcula normais e Jacobianos de superfície.
     """
+
     K = x.shape[1]
     Nfp = N + 1 # Pode calcular o Nfp aqui dentro sem problemas!
     
@@ -55,7 +56,7 @@ def Normals2D(x, y, Dr, Ds, Fmask, N):
     sJ = np.sqrt(nx**2 + ny**2)
     nx = nx / sJ
     ny = ny / sJ
-    
+
     return nx, ny, sJ
 
 def Connect2D(EToV): # ?????

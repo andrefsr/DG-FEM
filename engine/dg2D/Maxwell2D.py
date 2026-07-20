@@ -128,13 +128,11 @@ def MaxwellRhs2D_PEC(Hx, Hy, Ez, malha, time):
     dHy = Hy_flat[malha.vmapM] - Hy_flat[malha.vmapP]
     dEz = Ez_flat[malha.vmapM] - Ez_flat[malha.vmapP]
     
-    #################################################################################################
     # 3. Condição de Contorno: Condutor Elétrico Perfeito (PEC)
     # Na parede (mapB), não há salto magnético, e o salto elétrico reflete perfeitamente
     dHx[malha.mapB] = 0.0
     dHy[malha.mapB] = 0.0
     dEz[malha.mapB] = 2.0 * Ez_flat[malha.vmapB]
-    #################################################################################################
     
     # 4. Retorna os saltos para o formato 2D (Nós_da_Face x Elementos) 
     # para podermos multiplicar ponto-a-ponto com os vetores normais
@@ -146,18 +144,15 @@ def MaxwellRhs2D_PEC(Hx, Hy, Ez, malha, time):
     # 5. Fluxos de Fronteira (Upwind)
     alpha = 1.0
     ndotdH = malha.nx * dHx + malha.ny * dHy
-    
     fluxHx =  malha.ny * dEz + alpha * (ndotdH * malha.nx - dHx)
-    fluxHy = -malha.nx * dEz + alpha * (ndotdH * malha.ny - dHy) # Corrigido para -dHy
+    fluxHy = -malha.nx * dEz + alpha * (ndotdH * malha.ny - dHy)
     fluxEz = -malha.nx * dHy + malha.ny * dHx - alpha * dEz
     
     # 6. Derivadas Locais (Operadores de Volume)
-    # Agora passamos os argumentos que elas exigem
     Ezx, Ezy = op2D.Grad2D(Ez, malha.rx, malha.sx, malha.ry, malha.sy, malha.Dr, malha.Ds)
     CuHx, CuHy, CuHz = op2D.Curl2D(Hx, Hy, None, malha.rx, malha.sx, malha.ry, malha.sy, malha.Dr, malha.Ds)
     
     # 7. Montagem do RHS final: Volume + Fluxo(Borda)
-    # Correção: LIFT exige multiplicação de matriz (@)
     rhsHx = -Ezy + malha.LIFT @ (malha.Fscale * fluxHx) / 2.0
     rhsHy =  Ezx + malha.LIFT @ (malha.Fscale * fluxHy) / 2.0
     rhsEz = CuHz + malha.LIFT @ (malha.Fscale * fluxEz) / 2.0
@@ -217,12 +212,22 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     dtscale = setup.dtscale2D(malha.x, malha.y, malha.r, malha.s)
     
     # O passo de tempo básico
-    CFL = 0.2
+    CFL = 0.1
     dt = CFL*np.min(dtscale) * rmin * (2.0/3.0)
 
     pp = []
     t = []
+    erro = []
     passo = 0
+
+    # -------------------------------------------------------------
+    # 1. COLOQUE ISTO ANTES DO LOOP 'while time < FinalTime:'
+    # Calcula a norma de referência usando o pico máximo da onda (t=0)
+    # -------------------------------------------------------------
+    Ez_pico = np.sin(np.pi*malha.x) * np.sin(np.pi*malha.y) # cosseno = 1
+    integral_pico = np.sum(malha.J * (Ez_pico**2))
+    wt_ref = np.sqrt(integral_pico)
+
     while time < FinalTime:
         
         # Trava de segurança: impede que a simulação passe do tempo final desejado
@@ -270,13 +275,24 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
         if passo % 5 == 0:
             print(f"Tempo atual: {time:.4e} / {FinalTime:.4e}") 
             
-        if passo % 2 == 0:
-            t.append(time)
-            pp.append(Ez.copy())
+        #if passo % 2 == 0:
+        t.append(time)
+        pp.append(Ez.copy())
 
-    t.append(time)
-    pp.append(Ez.copy())
-    print('passos =',passo)
-    return Hx, Hy, Ez, pp, t
+        # -------------------------------------------------------------
+        # 2. DENTRO DO LOOP (onde você já estava colocando)
+        # -------------------------------------------------------------
+        Ez_analitico = np.sin(np.pi*malha.x)*np.sin(np.pi*malha.y)*np.cos(np.sqrt(2)*np.pi*time)
+        erro_quadrado = (Ez - Ez_analitico)**2
+        integral_erro = np.sum(malha.J * erro_quadrado)
+        En = np.sqrt(integral_erro) # Erro Absoluto L2
+
+        # Divide pelo referencial fixo, e nunca mais por zero!
+        erro_L2_real = En / wt_ref 
+        erro.append(erro_L2_real)
+
+
+    print('passos =', passo)
+    return Hx, Hy, Ez, pp, t, erro
 
 
