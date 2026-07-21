@@ -282,7 +282,7 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
         # -------------------------------------------------------------
         # 2. DENTRO DO LOOP (onde você já estava colocando)
         # -------------------------------------------------------------
-        Ez_analitico = np.sin(np.pi*malha.x)*np.sin(np.pi*malha.y)*np.cos(np.sqrt(2)*np.pi*time)
+        Ez_analitico = np.sin(malha.x)*np.sin(malha.y)*np.cos(np.sqrt(2)*time)
         erro_quadrado = (Ez - Ez_analitico)**2
         integral_erro = np.sum(malha.J * erro_quadrado)
         En = np.sqrt(integral_erro) # Erro Absoluto L2
