@@ -147,7 +147,7 @@ def MaxwellRhs2D_PEC(Hx, Hy, Ez, malha, time):
     fluxHx =  malha.ny * dEz + alpha * (ndotdH * malha.nx - dHx)
     fluxHy = -malha.nx * dEz + alpha * (ndotdH * malha.ny - dHy)
     fluxEz = -malha.nx * dHy + malha.ny * dHx - alpha * dEz
-    
+
     # 6. Derivadas Locais (Operadores de Volume)
     Ezx, Ezy = op2D.Grad2D(Ez, malha.rx, malha.sx, malha.ry, malha.sy, malha.Dr, malha.Ds)
     CuHx, CuHy, CuHz = op2D.Curl2D(Hx, Hy, None, malha.rx, malha.sx, malha.ry, malha.sy, malha.Dr, malha.Ds)
@@ -205,7 +205,8 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     
     # 2. Cálculo do passo de tempo (CFL)
     # Cuidado: se JacobiGQ retornar (raízes, pesos), garanta que está pegando as raízes
-    rLGL, _ = aux.JacobiGQ(0, 0, malha.N) 
+    rLGL, _ = aux.JacobiGQ(0, 0, malha.N)
+    #rLGL = aux.JacobiGL(0, 0, malha.N)
     rmin = np.abs(rLGL[0] - rLGL[1]) 
     
     # Chamando com as variáveis corretas
@@ -274,8 +275,7 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
 
         if passo % 5 == 0:
             print(f"Tempo atual: {time:.4e} / {FinalTime:.4e}") 
-            
-        #if passo % 2 == 0:
+        
         t.append(time)
         pp.append(Ez.copy())
 
@@ -291,7 +291,8 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
         erro_L2_real = En / wt_ref 
         erro.append(erro_L2_real)
 
-
+        #time += dt
+        #passo += 1
     print('passos =', passo)
     return Hx, Hy, Ez, pp, t, erro
 

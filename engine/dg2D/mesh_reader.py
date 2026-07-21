@@ -71,7 +71,7 @@ def MeshReader2D(nome_arquivo):
     # K é o número total de triângulos
     K = EToV.shape[0]
     
-        # Extrai as coordenadas x e y dos 3 vértices de cada triângulo
+    # Extrai as coordenadas x e y dos 3 vértices de cada triângulo
     x1, y1 = VX[EToV[:, 0]], VY[EToV[:, 0]]
     x2, y2 = VX[EToV[:, 1]], VY[EToV[:, 1]]
     x3, y3 = VX[EToV[:, 2]], VY[EToV[:, 2]]
@@ -97,3 +97,56 @@ def MeshReader2D(nome_arquivo):
 
     return VX, VY, EToV, BCTags_list
 
+import numpy as np
+import meshio
+
+def MeshReader2D_v4(nome_arquivo):
+    """
+    Lê malhas do Gmsh (formato 4.1 ou superior) usando a biblioteca meshio.
+    Retorna matrizes perfeitamente limpas para solvers DGTD.
+    """
+    print(f"Lendo malha 4.1 com meshio: {nome_arquivo}")
+    malha = meshio.read(nome_arquivo)
+
+    # 1. Extrai as coordenadas X e Y de todos os vértices
+    # O meshio retorna um array 3D (X, Y, Z), pegamos só as duas primeiras colunas
+    VX = malha.points[:, 0]
+    VY = malha.points[:, 1]
+
+    # 2. Extrai a matriz de conectividade dos triângulos (EToV)
+    if "triangle" not in malha.cells_dict:
+        raise ValueError("Nenhum triângulo encontrado! Verifique se a superfície foi gerada no Gmsh.")
+    
+    # O meshio já retorna a matriz EToV indexada em zero (padrão Python)
+    EToV = malha.cells_dict["triangle"]
+
+    # 3. Extrai as tags de contorno (BCTags) para as paredes
+    # BCTags será uma matriz onde cada linha é: [No_1, No_2, Tag_Fisica]
+    BCTags = []
+    if "line" in malha.cells_dict:
+        linhas = malha.cells_dict["line"] # Nós que formam as linhas
+        
+        # Tenta pegar as tags físicas definidas no Gmsh (ex: 1 para PEC)
+        try:
+            tags = malha.cell_data_dict["gmsh:physical"]["line"]
+            # Une os nós da aresta com o número da tag física
+            BCTags = np.column_stack((linhas, tags))
+        except KeyError:
+            print("Aviso: Linhas encontradas, mas sem 'Physical Groups' associados.")
+            BCTags = linhas
+
+    # ----------------------------------------------------------------------
+    # A ARMADILHA DA BASE 1 vs BASE 0 (IMPORTANTE)
+    # ----------------------------------------------------------------------
+    # O formato MSH antigo e o código original do Hesthaven (MATLAB) começam 
+    # a contar os nós a partir do número 1. O meshio e o Python contam do 0.
+    # Se o seu arquivo StartUp2D.py usa a lógica de subtrair 1 internamente 
+    # (ex: EToV = EToV - 1), o array lido pelo meshio vai ficar negativo e quebrar.
+    #
+    # Se o seu StartUp2D EXIGE que os índices comecem em 1, descomente as 2 linhas abaixo:
+    #
+    # EToV = EToV + 1
+    # if len(BCTags) > 0: BCTags[:, 0:2] = BCTags[:, 0:2] + 1
+    # ----------------------------------------------------------------------
+
+    return VX, VY, EToV, BCTags
