@@ -7,17 +7,11 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.tri as mtri
 
-# --- O SEGREDO PARA ATUALIZAR ARQUIVOS EXTERNOS ---
-#import importlib
-#import Maxwell2D as Max
-#importlib.reload(Max)  # Força o Python a ler as alterações salvas!
-# --------------------------------------------------
-
 ### Driver Script for solving the 2D vacuum Maxwell's equations on TM form
 
 N = 5
 
-VX, VY, EToV, BCTags = msh.MeshReader2D('engine/dg2D/cavidade quadrada.msh')
+VX, VY, EToV, BCTags = msh.MeshReader2D('engine/dg2D/malhas/cavidade quadrada.msh')
 
 malha = stp.StartUp2D(N,EToV,VX,VY)
 
@@ -28,16 +22,11 @@ Ez = np.sin(np.pi*malha.x)*np.sin(np.pi*malha.y)
 Hx = np.zeros((malha.Np,malha.K))
 Hy = np.zeros((malha.Np,malha.K))
 
-FinalTime = 0.1
+FinalTime = 5
 #Hx, Hy, Ez = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
 Hx, Hy, Ez, pp, t, erro = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
 
-print('t final', t[-1])
 ###########################################################################################################################
-
-
-#print(f"Ordem Polinomial (N): {malha.N}")
-#print(f"Nós de Interpolação por Triângulo (Np): {malha.Np}")
 
 x_plot = malha.x.flatten(order='F')
 y_plot = malha.y.flatten(order='F')
