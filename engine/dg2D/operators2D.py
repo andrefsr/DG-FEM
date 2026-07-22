@@ -77,8 +77,6 @@ def Dmatrices2D(N,r,s,V):
 
     return Dr, Ds
 
-import numpy as np
-
 def Filter2D(N, Nc, s, V):
     """
     Constrói a Matriz de Filtro Exponencial 2D.

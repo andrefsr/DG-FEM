@@ -23,8 +23,8 @@ def Warpfactor(N, rout):
     # rout representa os pontos de avaliação fora/na borda
     rout = np.asarray(rout, dtype=float) 
     
-    LGLr = aux.JacobiGL(0, 0, N)           # r em distribuição LGL
-    req = np.linspace(-1, 1, N+1)          # r em distribuição equidistante
+    LGLr = aux.JacobiGL(0, 0, N)          # r em distribuição LGL
+    req = np.linspace(-1, 1, N+1)         # r em distribuição equidistante
     
     Veq = aux.Vandermonde1D(N, req)
     
@@ -48,10 +48,10 @@ def Warpfactor(N, rout):
 def Nodes2D(N):
     # obtém as coordenadas (x,y) dos nós no triângulo equilátero de referencia.
 
-    alpopt = [0.0 , 0.0 , 1.4152, 0.1001, 0.2751, 0.98, 1.099,
+    alpopt = [0.0 , 0.0 , 1.4152, 0.1001, 0.2751, 0.98, 1.0999,
               1.2832, 1.3648, 1.4773, 1.4959, 1.5743, 1.5770, 1.6223, 1.6258]
 
-    if N < 15:
+    if N <= 15:
         alpha = alpopt[N]
     else:
         alpha = 5/3
@@ -68,8 +68,9 @@ def Nodes2D(N):
             L1[sk] = n/N
             L3[sk] = m/N
             sk += 1
+    
     L2 = 1.0 - L1 - L3
-    x = -L2 + L3
+    x = - L2 + L3
     y = (-L2 - L3 + 2*L1)/np.sqrt(3.0)
 
     blend1 = 4*L2*L3

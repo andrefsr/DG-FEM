@@ -1,6 +1,4 @@
 import numpy as np
-import Nodes
-import operators2D as op2D
 
 def GeometricFactors2D(x,y,Dr,Ds):
     '''Compute the metric elements for the local mappings of the elements'''
@@ -26,8 +24,11 @@ def Normals2D(x, y, Dr, Ds, Fmask, N):
     K = x.shape[1]
     Nfp = N + 1 # Pode calcular o Nfp aqui dentro sem problemas!
     
-    xr = Dr @ x; yr = Dr @ y
-    xs = Ds @ x; ys = Ds @ y
+    xr = Dr @ x 
+    yr = Dr @ y
+    xs = Ds @ x
+    ys = Ds @ y
+    J = - xs * yr + xr * ys
     
     # Fmask já precisa vir calculada com (r,s) lá do script principal!
     Fmask_flat = Fmask.flatten(order='F')
@@ -59,7 +60,7 @@ def Normals2D(x, y, Dr, Ds, Fmask, N):
 
     return nx, ny, sJ
 
-def Connect2D(EToV): # ?????
+def Connect2D(EToV): # ?????????
     """
     Constrói as matrizes de conectividade Elemento-Elemento (EToE) 
     e Elemento-Face (EToF) a partir da topologia EToV.
@@ -112,7 +113,7 @@ def Connect2D(EToV): # ?????
                 
     return EToE, EToF 
 
-def BuildMaps2D(x, y, Fmask, EToV, EToE, EToF, VX, VY, NODETOL=1e-10):
+def BuildMaps2D(x, y, Fmask, EToV, EToE, EToF, VX, VY, NODETOL=1e-12):
     """
     Constrói as tabelas de conectividade e contorno para a malha nodal.
     """
@@ -168,7 +169,8 @@ def BuildMaps2D(x, y, Fmask, EToV, EToE, EToF, VX, VY, NODETOL=1e-10):
             # Preenche os mapas PLUS (com as informações de k2 e f2 achadas)
             vmapP[idM, f1, k1] = vidP[idP]
             # Cálculo do índice linear (cuidado: matemática de base 0 no Python)
-            mapP[idM, f1, k1] = idP + (f2 * Nfp) + (k2 * Nfaces * Nfp)
+            mapP[idM, f1, k1] = idP + ((f2) * Nfp) + ((k2) * Nfaces * Nfp)
+            #mapP[idM, f1, k1] = idP + ((f2 - 1) * Nfp) + ((k2-1) * Nfaces * Nfp)
             
     # 4. Achata as matrizes em vetores 1D (usando ordem Fortran para manter compatibilidade)
     vmapP = vmapP.flatten(order='F')

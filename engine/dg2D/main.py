@@ -30,7 +30,7 @@ Hy = np.zeros((malha.Np,malha.K))
 
 FinalTime = 0.1
 #Hx, Hy, Ez = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
-Hx, Hy, Ez, pp, t = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
+Hx, Hy, Ez, pp, t, erro = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
 
 print('t final', t[-1])
 ###########################################################################################################################
