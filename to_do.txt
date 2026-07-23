@@ -1,0 +1,20 @@
+To do list
+
+DGTD 1D:
+- Validar dg1D
+
+DGTD 2D:
+- Implementar materiais no dg2D (aplicar permissividade em pontos específicos e materiais PEC)
+- Implementar fonte móvel (antenta tx gpr)
+- Implementar ponta de prova móvel (antena rx gpr)
+- Adapatar o código dos fractais para a malha com triângulos
+
+DGTD 3D:
+- Implementação 
+- Validação com condição inicial na cavidade PEC
+- Implementar fontes
+- Implementar PML
+- Implementar materiais no dg3D (aplicar permissividade em pontos específicos e materiais PEC)
+- Implementar fonte móvel (antenta tx gpr)
+- Implementar ponta de prova móvel (antena rx gpr)
+- Implementar fractais nos tetraedros
