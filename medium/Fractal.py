@@ -1,6 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+'''
+ADAPTAR PARA OS TRIÂNGULOS DO DG !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+'''
+
 Nx = Ny = 256
 
 kx = np.fft.fftfreq(Nx)

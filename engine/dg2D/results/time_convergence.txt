@@ -1,0 +1,12 @@
+------------ N = 8 e 800 elementos ------------
+Para CFL = 1.0 -> erro = 4.90e-10
+Para CFL = 0.5 -> erro = 3.15e-11
+Para CFL = 0.25 -> erro = 2.05e-12
+Para CFL = 0.125 -> erro = 2.72e-13
+
+
+Cálculo da Ordem do Runge-Kutta (q):
+----------------------------------------
+De CFL 1.000 para 0.500 -> Ordem q = 3.962
+De CFL 0.500 para 0.250 -> Ordem q = 3.938
+De CFL 0.250 para 0.125 -> Ordem q = 2.917

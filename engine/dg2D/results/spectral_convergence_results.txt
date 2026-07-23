@@ -1,0 +1,17 @@
+Taxa de Convergência Espectral (Sigma):
+De N=1 para N=2 -> taxa sigma = 3.31
+De N=2 para N=3 -> taxa sigma = 3.55
+De N=3 para N=4 -> taxa sigma = 3.58
+De N=4 para N=5 -> taxa sigma = 3.73
+De N=5 para N=6 -> taxa sigma = 3.80
+De N=6 para N=7 -> taxa sigma = 3.96
+
+
+Para N = 1 -> erro = 1.40e-02
+Para N = 2 -> erro = 5.09e-04
+Para N = 3 -> erro = 1.46e-05
+Para N = 4 -> erro = 4.06e-07
+Para N = 5 -> erro = 9.72e-09
+Para N = 6 -> erro = 2.18e-10
+Para N = 7 -> erro = 4.16e-12
+Para N = 8 -> erro = 7.33e-13

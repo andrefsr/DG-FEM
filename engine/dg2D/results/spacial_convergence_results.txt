@@ -1,0 +1,10 @@
+Ordem de Convergência Espacial (k):
+De 11 para 21 pontos -> Ordem = 2.53
+De 21 para 41 pontos -> Ordem = 2.29
+De 41 para 81 pontos -> Ordem = 2.09
+
+
+Para h = 6.283185e-01 -> erro = 1.04e-01
+Para h = 3.141593e-01 -> erro = 1.80e-02
+Para h = 1.570796e-01 -> erro = 3.67e-03
+Para h = 7.853982e-02 -> erro = 8.64e-04

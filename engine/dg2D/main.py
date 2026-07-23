@@ -16,14 +16,14 @@ VX, VY, EToV, BCTags = msh.MeshReader2D('engine/dg2D/malhas/cavidade quadrada.ms
 malha = stp.StartUp2D(N,EToV,VX,VY)
 
 ### Condições iniciais
-Ez = np.sin(np.pi*malha.x)*np.sin(np.pi*malha.y)
-#Ez = np.zeros((malha.Np,malha.K))
+#Ez = np.sin(np.pi*malha.x)*np.sin(np.pi*malha.y)
+Ez = np.zeros((malha.Np,malha.K))
 #Ez = np.exp(-(malha.x**2 + malha.y**2) / (0.1**2))
 Hx = np.zeros((malha.Np,malha.K))
 Hy = np.zeros((malha.Np,malha.K))
 
 FinalTime = 5
-Hx, Hy, Ez, pp, t, erro = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha,CFL=0.1,pml=False)
+Hx, Hy, Ez, pp, t, _ = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha,CFL=0.1,pml=True)
 
 ###########################################################################################################################
 
@@ -65,7 +65,7 @@ if node == True:
 
     plt.show()
 
-ani = False
+ani = True
 if ani == True:
     c0 = 299792458.0 # Velocidade da luz para o tempo físico
 

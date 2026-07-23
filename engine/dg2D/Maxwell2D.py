@@ -157,6 +157,7 @@ def MaxwellRhs2D_PEC(Hx, Hy, Ez, malha, time):
     rhsHy =  Ezx + malha.LIFT @ (malha.Fscale * fluxHy) / 2.0
     rhsEz = CuHz + malha.LIFT @ (malha.Fscale * fluxEz) / 2.0
 
+    #f =2
     #rhsEz += 2*np.pi*f*np.sin(2.0 * np.pi * f * time)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
     #t0 = 0.5  # Instante em que o pulso atinge o pico
     #tau = 0.2

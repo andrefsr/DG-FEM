@@ -1,9 +1,1 @@
-.venv/
 *.pdf
-*.jpeg
-*.png
-engine/dg2D/__pycache__/
-D:\OneDrive\Estudos\Mestrado - Engenharia Elétrica\MaxSolver DG-FEM\engine\dg2D\__pycache__
-*.gif
-*.txt
-engine/dg2D/dgfem2dclaude.py

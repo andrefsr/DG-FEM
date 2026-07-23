@@ -1,0 +1,48 @@
+Metadata-Version: 2.1
+Name: h5
+Version: 0.9.3
+Summary: H5py utils
+Home-page: https://github.com/dynamic-graphics-inc/dgpy-libs/tree/main/libs/h5
+License: MIT
+Keywords: hdf5,h5py,h5,numpy
+Author: jesse
+Author-email: jesse@dgi.com
+Requires-Python: >=3.8.0
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Typing :: Typed
+Provides-Extra: cli
+Requires-Dist: click (>=8.1.3,!=8.1.4) ; extra == "cli"
+Requires-Dist: globsters (>=0.0.2,<0.0.4) ; extra == "cli"
+Requires-Dist: h5py (>=3.7.0)
+Requires-Dist: numpy (>=1.23.2)
+Requires-Dist: rich (>=13.3.3,<14.0.0) ; extra == "cli"
+Requires-Dist: typing-extensions (>=4.5.0,<5.0.0)
+Project-URL: Repository, https://github.com/dynamic-graphics-inc/dgpy-libs
+Description-Content-Type: text/markdown
+
+<a href="https://github.com/dynamic-graphics-inc/dgpy-libs">
+<img align="right" src="https://github.com/dynamic-graphics-inc/dgpy-libs/blob/main/docs/images/dgpy_banner.svg?raw=true" alt="drawing" height="120" width="300"/>
+</a>
+
+# h5
+
+[![Wheel](https://img.shields.io/pypi/wheel/h5.svg)](https://img.shields.io/pypi/wheel/h5.svg)
+[![Version](https://img.shields.io/pypi/v/h5.svg)](https://img.shields.io/pypi/v/h5.svg)
+[![py_versions](https://img.shields.io/pypi/pyversions/h5.svg)](https://img.shields.io/pypi/pyversions/h5.svg)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+**Install:** `pip install h5`
+
+---
+
+Util functions for h5py and home of recursive generators!
+
