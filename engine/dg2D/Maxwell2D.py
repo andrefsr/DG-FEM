@@ -205,13 +205,6 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha,CFL,pml:bool):
         resPy = np.zeros((malha.Np, malha.K))
         resQx = np.zeros((malha.Np, malha.K))
         resQy = np.zeros((malha.Np, malha.K))
-
-    # DICA DE OURO: Criar a triangulação uma única vez antes do loop 
-    # economiza MUITO processamento!
-    #x_flat = malha.x.flatten(order='F')
-    #y_flat = malha.y.flatten(order='F')
-    #triangulacao = mtri.Triangulation(x_flat, y_flat)
-    # ------------------------------
     
     # Registradores residuais do RK (só precisamos de um para cada variável)
     resHx = np.zeros((malha.Np, malha.K))

@@ -1,4 +1,4 @@
-To do list
+A fazer:
 
 DGTD 1D:
 - Validar dg1D
@@ -18,3 +18,12 @@ DGTD 3D:
 - Implementar fonte móvel (antenta tx gpr)
 - Implementar ponta de prova móvel (antena rx gpr)
 - Implementar fractais nos tetraedros
+
+Geração de malha:
+- Implementação malha simples em 2D
+
+GUI (se sobrar tempo):
+- Implementação
+
+FDTD (se sobrar tempo):
+- Inserir códigos FDTD nas 3 dimensões em engine
