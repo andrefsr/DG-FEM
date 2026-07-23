@@ -23,8 +23,7 @@ Hx = np.zeros((malha.Np,malha.K))
 Hy = np.zeros((malha.Np,malha.K))
 
 FinalTime = 5
-#Hx, Hy, Ez = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
-Hx, Hy, Ez, pp, t, erro = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha)
+Hx, Hy, Ez, pp, t, erro = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha,CFL=0.1,pml=False)
 
 ###########################################################################################################################
 

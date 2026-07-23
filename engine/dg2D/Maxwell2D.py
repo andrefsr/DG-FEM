@@ -165,7 +165,7 @@ def MaxwellRhs2D_PEC(Hx, Hy, Ez, malha, time):
 
     return rhsHx, rhsHy, rhsEz
 
-def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
+def Maxwell2D(Hx, Hy, Ez, FinalTime, malha,CFL,pml:bool):
     '''Integrate TM-mode Maxwell's until FinalTime starting with initial conditions Hx, Hy, Ez'''
     
     # 1. Matrizes do Runge-Kutta de Baixo Armazenamento (5 estágios, 4ª ordem)
@@ -189,7 +189,7 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
                     2802321613138.0 / 2924317926251.0])
 
     time = 0.0
-    apml = False
+    apml = pml
     if apml == True:
         # Inicia os campos auxiliares
         Px = np.zeros((malha.Np, malha.K))
@@ -227,19 +227,15 @@ def Maxwell2D(Hx, Hy, Ez, FinalTime, malha):
     dtscale = setup.dtscale2D(malha.x, malha.y, malha.r, malha.s)
     
     # O passo de tempo básico
-    CFL = 0.1
-    dt = CFL*np.min(dtscale) * rmin * (2.0/3.0)
+    cfl = CFL
+    dt = cfl*np.min(dtscale) * rmin * (2.0/3.0)
 
     pp = []
     t = []
     erro = []
     passo = 0
 
-    # -------------------------------------------------------------
-    # 1. COLOQUE ISTO ANTES DO LOOP 'while time < FinalTime:'
-    # Calcula a norma de referência usando o pico máximo da onda (t=0)
-    # -------------------------------------------------------------
-    Ez_pico = np.sin(np.pi*malha.x) * np.sin(np.pi*malha.y) # cosseno = 1
+    Ez_pico = np.sin(np.pi*malha.x) * np.sin(np.pi*malha.y)
     integral_pico = np.sum(malha.J * (Ez_pico**2))
     wt_ref = np.sqrt(integral_pico)
 

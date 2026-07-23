@@ -1,7 +1,7 @@
 // 1. Variáveis
 // O Gmsh tem a constante 'Pi' nativa embutida nele!
 L = Pi;          
-N_pontos = 81; // Mude aqui para refinar a malha no futuro
+N_pontos = 5; // Mude aqui para refinar a malha no futuro
 
 // 2. Pontos do Quadrado [-Pi, Pi]
 Point(1) = {-L, -L, 0, 1.0};

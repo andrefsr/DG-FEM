@@ -1,8 +1,3 @@
-
-### Fase U(0,2pi)
-### Amplitude propto k ^ -beta
-### Tomar a inversa
-
 import numpy as np
 import matplotlib.pyplot as plt
 
