@@ -25,7 +25,7 @@ def rsttoabc(r,s,t):
         else:
             a[n] = -1
 
-        if t[n] != -1:
+        if t[n] != 1:
             b[n] = 2*(1+s[n])/(1 -t[n]) -1
         else:
             b[n] = -1
@@ -76,7 +76,7 @@ def evalshift(p,pval,L1,L2,L3):
     '''Compute two-dimensional Warp & Blend transform'''
 
     # 1) Computa a distribuição GLL nodal 
-    gaussX = -JacobiGL(0,0,p)
+    gaussX = JacobiGL(0,0,p)
 
     # 2) Computa a função blending em cada nó de cada aresta
     blend1 = L2*L3
@@ -176,31 +176,34 @@ def Nodes3D(p):
     t2[3,:] = v4 - 0.5*(v1 + v3)
 
     for n in range(4): # Normalizando as tangentes
-        t1[n,:] = t1[n,:]/np.abs(t1[n,:])
-        t2[n,:] = t2[n,:]/np.abs(t2[n,:])
+        t1[n,:] = t1[n,:] / np.linalg.norm(t1[n,:])
+        t2[n,:] = t2[n,:] / np.linalg.norm(t2[n,:])
 
     # Warp e Blend para cada face
-    XYZ = L3*v1 + L4*v2 + L2*v3 + L1*v4
+    XYZ = L3[:, None]*v1 + L4[:, None]*v2 + L2[:, None]*v3 + L1[:, None]*v4
     shift = np.zeros_like(XYZ)
 
-    for face in range(1,4):
+    for face in range(1, 5): 
         if face == 1: La = L1; Lb = L2; Lc = L3; Ld = L4
         if face == 2: La = L2; Lb = L1; Lc = L3; Ld = L4
         if face == 3: La = L3; Lb = L1; Lc = L4; Ld = L2
         if face == 4: La = L4; Lb = L1; Lc = L3; Ld = L2
 
-        warp1, warp2 = WarpShiftFace3D(p,alpha,alpha,La,Lb,Lc,Ld)
+        # Computa o warp tangencial à face
+        warp1, warp2 = WarpShiftFace3D(p, alpha, alpha, La, Lb, Lc, Ld)
 
-        blend = Lb*Lc*Ld
+        blend = Lb * Lc * Ld # Computa o blending de volume
 
-        denom = (Lb+0.5*La)*(Lc+0.5*La)*(Ld+0.5*La)
-        ids = np.where(denom>tol)
-        blend[ids] = (1+ (alpha*La[ids])**2)*blend[ids]/denom[ids]
+        denom = (Lb + 0.5 * La) * (Lc + 0.5 * La) * (Ld + 0.5 * La)
+        ids = np.where(denom > tol)
+        blend[ids] = (1 + (alpha * La[ids])**2) * blend[ids] / denom[ids]
 
-        shift += blend*warp1*t1[face,:] + blend*warp2*t2[face,:]
-
-        ids = np.where((La<tol) and ((Lb>tol) + (Lc>tol) + (Ld>tol) < 3))
-        shift[ids,:] = warp1[ids]*t1[face] + warp2[ids]*t2[face]
+        # Computa warp & blend
+        shift += (blend * warp1)[:, None] * t1[face-1, :] + (blend * warp2)[:, None] * t2[face-1, :]
+        
+        #ids = np.where((La < tol) & ((Lb > tol) + (Lc > tol) + (Ld > tol) < 3))
+        ids = np.where((La < tol) & ((Lb <= tol) | (Lc <= tol) | (Ld <= tol)))
+        shift[ids, :] = warp1[ids, None] * t1[face-1] + warp2[ids, None] * t2[face-1]
 
     XYZ += shift
 
@@ -211,21 +214,19 @@ def Nodes3D(p):
     return X, Y, Z
 
 def xyztorst(x,y,z):
-    ''''''
+    ''' Transfere de (x,y,z) no tetraedro equilátero para (r,s,t) no triângulo padrão. '''
 
-    # Define os vértices do tetraedro
     v1 = np.array([-1, -1/np.sqrt(3), -1/np.sqrt(6)])
     v2 = np.array([1, -1/np.sqrt(3), -1/np.sqrt(6)])
     v3 = np.array([0.0, 2/np.sqrt(3), -1/np.sqrt(6)])
     v4 = np.array([0.0, 0.0, 3/np.sqrt(6)])
 
-    rhs = np.concatenate(x.T,y.T,z.T) - 0.5*(v2.T + v3.T + v4.T - v1.T) @ np.ones(len(x))
-    A = np.concatenate(0.5*(v2-v1).T, 0.5*(v3-v1).T, 0.5*(v4-v1).T)
-    RST = A @ np.linalg.inv(rhs)
+    rhs = np.array([x, y, z]) - 0.5 * (v2 + v3 + v4 - v1)[:, None]
+    A = np.column_stack((0.5*(v2-v1), 0.5*(v3-v1), 0.5*(v4-v1)))
+    RST = np.linalg.solve(A,rhs)
 
     r = RST[0,:].T
     s = RST[1,:].T
     t = RST[2,:].T
-
 
     return r, s, t
