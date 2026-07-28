@@ -1,2 +1,8 @@
 *.pdf
 .venv/
+engine/dg1D/__pycache__
+engine/dg2D/__pycache__
+engine/dg3D/__pycache__
+*.pyc
+*.pyo
+*.pyd
