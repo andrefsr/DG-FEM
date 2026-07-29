@@ -201,7 +201,6 @@ def Nodes3D(p):
         # Computa warp & blend
         shift += (blend * warp1)[:, None] * t1[face-1, :] + (blend * warp2)[:, None] * t2[face-1, :]
         
-        #ids = np.where((La < tol) & ((Lb > tol) + (Lc > tol) + (Ld > tol) < 3))
         ids = np.where((La < tol) & ((Lb <= tol) | (Lc <= tol) | (Ld <= tol)))
         shift[ids, :] = warp1[ids, None] * t1[face-1] + warp2[ids, None] * t2[face-1]
 
