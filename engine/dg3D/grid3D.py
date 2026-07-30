@@ -29,7 +29,7 @@ def GeometricFactors3D(x,y,z,Dr,Ds,Dt):
 def Normals3D(rx,ry,rz,sx,sy,sz,tx,ty,tz,J,Fmask,N,K):
     '''Computa as normais apontando para fora nos elementos das faces assim como os Jacobianos de superfície'''
 
-    Nfp = (N+1)*(N+2)/2
+    Nfp = int((N+1)*(N+2)/2)
 
     # O comando MATLAB Fmask(:) achata a matriz lendo por colunas (padrão Fortran).
     # Para replicar isso no NumPy, usamos flatten('F').
@@ -49,9 +49,9 @@ def Normals3D(rx,ry,rz,sx,sy,sz,tx,ty,tz,J,Fmask,N,K):
     ftz = tz[fmask_flat, :]
 
     # Construir normais
-    nx = np.zeros((4 * Nfp, K))
-    ny = np.zeros((4 * Nfp, K))
-    nz = np.zeros((4 * Nfp, K))
+    nx = np.zeros((int(4 * Nfp), K))
+    ny = np.zeros((int(4 * Nfp), K))
+    nz = np.zeros((int(4 * Nfp), K))
 
     # No Python, em vez de criar vetores de índices como o MATLAB faz (ex: fid1 = (1:Nfp)'),
     # usamos o objeto nativo 'slice' do Python. Ele é mais rápido e gasta menos memória.

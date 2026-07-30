@@ -3,7 +3,7 @@ from setup3D import StartUp3D
 from Maxwell3D import Maxwell3D
 from mesh_reader3D import MeshReader3D
 
-N = 5
+N = 3
 
 VX, VY, VZ, EToV = MeshReader3D('engine/dg3D/malhas3D/cavidade3D.msh')
 
@@ -19,5 +19,24 @@ Hz = np.zeros((malha.Np,malha.K))
 Ex = np.zeros((malha.Np,malha.K))
 Ey = np.zeros((malha.Np,malha.K))
 
-FinalTime = 5
-Hx, Hy, Hz, Ex, Ey, Ez = Maxwell3D(Hx,Hy,Hz,Ex,Ey,Ez,FinalTime,malha,CFL=0.2,pml=False)
+FinalTime = 0.5
+Hx, Hy, Hz, Ex, Ey, Ez, t_final = Maxwell3D(Hx,Hy,Hz,Ex,Ey,Ez,FinalTime,malha,CFL=0.8,pml=False)
+
+##############
+
+Ez_analitico = np.sin(np.pi*malha.x)*np.sin(np.pi*malha.y)*np.cos(np.pi*np.sqrt(2)*t_final)
+
+M = np.linalg.inv(malha.V @ malha.V.T) 
+
+erro_nodal = Ez - Ez_analitico
+
+integral_erro_sq = np.sum(malha.J * (erro_nodal * (M @ erro_nodal)))
+En = np.sqrt(integral_erro_sq)
+
+integral_analitico_sq = np.sum(malha.J * (Ez_analitico * (M @ Ez_analitico)))
+wt = np.sqrt(integral_analitico_sq)
+
+erro_L2_real = En / wt
+
+print(f't_f = {t_final:.2f}')
+print(f'L2 error for Ez: {erro_L2_real:.3e}')

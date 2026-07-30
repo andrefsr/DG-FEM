@@ -5,12 +5,20 @@ from setup3D import dtscale3D
 def MaxwellRHS3D_PEC(Hx,Hy,Hz,Ex,Ey,Ez,malha,time):
     '''Calcula o lado direito das equações de Maxwell na formulação do DG3D'''
 
-    Hx_flat = Hx.flatten(order='F')
-    Hy_flat = Hy.flatten(order='F')
-    Hz_flat = Hz.flatten(order='F')
-    Ex_flat = Ex.flatten(order='F')
-    Ey_flat = Ey.flatten(order='F')
-    Ez_flat = Ez.flatten(order='F')
+    #Hx_flat = Hx.flatten(order='F')
+    #Hy_flat = Hy.flatten(order='F')
+    #Hz_flat = Hz.flatten(order='F')
+    #Ex_flat = Ex.flatten(order='F')
+    #Ey_flat = Ey.flatten(order='F')
+    #Ez_flat = Ez.flatten(order='F')
+
+    # Usa .ravel() em vez de .flatten() para NÃO alocar memória nova.
+    Hx_flat = Hx.ravel(order='F')
+    Hy_flat = Hy.ravel(order='F')
+    Hz_flat = Hz.ravel(order='F')
+    Ex_flat = Ex.ravel(order='F')
+    Ey_flat = Ey.ravel(order='F')
+    Ez_flat = Ez.ravel(order='F')
 
     # Armazena as diferenças de campos nas faces
     dHx = Hx_flat[malha.vmapP] - Hx_flat[malha.vmapM]
@@ -49,8 +57,8 @@ def MaxwellRHS3D_PEC(Hx,Hy,Hz,Ex,Ey,Ez,malha,time):
     fluxEy =   malha.nz * dHx - malha.nx * dHz + alpha * (dEy - ndotdE * malha.ny)
     fluxEz =   malha.nx * dHy - malha.ny * dHx + alpha * (dEz - ndotdE * malha.nz)
 
-    curlHx, curlHy, curlHz = Curl3D(Hx,Hy,Hz,malha.Dr,malha.Ds,malha.Dr,malha.rx,malha.sx,malha.tx,malha.ry,malha.sy,malha.ty,malha.rz,malha.sz,malha.tz)
-    curlEx, curlEy, curlEz = Curl3D(Ex,Ey,Ez,malha.Dr,malha.Ds,malha.Dr,malha.rx,malha.sx,malha.tx,malha.ry,malha.sy,malha.ty,malha.rz,malha.sz,malha.tz)
+    curlHx, curlHy, curlHz = Curl3D(Hx,Hy,Hz,malha.Dr,malha.Ds,malha.Dt,malha.rx,malha.sx,malha.tx,malha.ry,malha.sy,malha.ty,malha.rz,malha.sz,malha.tz)
+    curlEx, curlEy, curlEz = Curl3D(Ex,Ey,Ez,malha.Dr,malha.Ds,malha.Dt,malha.rx,malha.sx,malha.tx,malha.ry,malha.sy,malha.ty,malha.rz,malha.sz,malha.tz)
  
     rhsHx = - curlEx + malha.LIFT @ (malha.Fscale * fluxHx) / 2.0
     rhsHy = - curlEy + malha.LIFT @ (malha.Fscale * fluxHy) / 2.0
@@ -128,4 +136,4 @@ def Maxwell3D(Hx,Hy,Hz,Ex,Ey,Ez,FinalTime,malha,CFL,pml:bool):
         time += dt
         print(f"Tempo atual: {time:.4e} / {FinalTime:.2e}") 
     
-    return Hx, Hy, Hz, Ex, Ey, Ez
+    return Hx, Hy, Hz, Ex, Ey, Ez, time

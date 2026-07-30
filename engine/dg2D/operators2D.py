@@ -1,6 +1,6 @@
 import numpy as np
-import aux_func as aux
-import Nodes
+from . import aux_func as aux
+from . import Nodes
 
 def Vandermonde2D(N,r,s):
     # Inivializa a matriz de Vandermonde onde

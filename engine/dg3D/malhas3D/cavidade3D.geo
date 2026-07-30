@@ -1,21 +1,21 @@
 // PARA GERAR A MALHA: gmsh cavidade3D.geo -3 -format msh22
 // Tamanho característico do elemento (Refinamento)
-lc = 0.1; 
+lc = 0.2; 
 
 // ==========================================
 // 1. PONTOS
 // ==========================================
-// Base do cubo (z = 0)
-Point(1) = {0, 0, 0, lc}; // Canto inf esq
-Point(2) = {1, 0, 0, lc}; // Canto inf dir
-Point(3) = {1, 1, 0, lc}; // Canto sup dir
-Point(4) = {0, 1, 0, lc}; // Canto sup esq
+// Base do cubo (z = -1)
+Point(1) = {-1, -1, -1, lc}; // Canto inf esq
+Point(2) = { 1, -1, -1, lc}; // Canto inf dir
+Point(3) = { 1,  1, -1, lc}; // Canto sup dir
+Point(4) = {-1,  1, -1, lc}; // Canto sup esq
 
 // Topo do cubo (z = 1)
-Point(5) = {0, 0, 1, lc}; // Canto inf esq
-Point(6) = {1, 0, 1, lc}; // Canto inf dir
-Point(7) = {1, 1, 1, lc}; // Canto sup dir
-Point(8) = {0, 1, 1, lc}; // Canto sup esq
+Point(5) = {-1, -1,  1, lc}; // Canto inf esq
+Point(6) = { 1, -1,  1, lc}; // Canto inf dir
+Point(7) = { 1,  1,  1, lc}; // Canto sup dir
+Point(8) = {-1,  1,  1, lc}; // Canto sup esq
 
 // ==========================================
 // 2. LINHAS

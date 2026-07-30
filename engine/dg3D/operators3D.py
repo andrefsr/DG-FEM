@@ -126,7 +126,7 @@ def Lift3D(N,r,s,t,Fmask, V):
 
     Emat = np.zeros((int(Np),int(Nfaces*Nfp)))
 
-    for face in range(N):
+    for face in range(4):
         if face == 0: faceR = r[Fmask[:,0]]; faceS = s[Fmask[:,0]]
         if face == 1: faceR = r[Fmask[:,1]]; faceS = t[Fmask[:,1]]
         if face == 2: faceR = s[Fmask[:,2]]; faceS = t[Fmask[:,2]]
@@ -137,9 +137,10 @@ def Lift3D(N,r,s,t,Fmask, V):
         massFace = np.linalg.inv(massinv)
 
         idr = Fmask[:,face]
-        idc = np.arange(face * Nfp, (face + 1) * Nfp)
+        idc = np.arange(int(face * Nfp), int((face + 1) * Nfp))
 
-        Emat[idr,idc] = Emat[idr,idc] + massFace
+        #Emat[idr,idc] = Emat[idr,idc] + massFace
+        Emat[np.ix_(idr, idc)] += massFace
 
     LIFT = V @ (V.T @ Emat)
 
