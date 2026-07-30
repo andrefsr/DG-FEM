@@ -126,5 +126,6 @@ def Maxwell3D(Hx,Hy,Hz,Ex,Ey,Ez,FinalTime,malha,CFL,pml:bool):
             Ez = Ez + rk4b[INTRK] * resEz
 
         time += dt
-
+        print(f"Tempo atual: {time:.4e} / {FinalTime:.2e}") 
+    
     return Hx, Hy, Hz, Ex, Ey, Ez
