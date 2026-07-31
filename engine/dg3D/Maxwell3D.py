@@ -2,6 +2,86 @@ import numpy as np
 from operators3D import Curl3D
 from setup3D import dtscale3D
 
+def sigmas3D(malha):
+    # Parâmetros da PML
+    p = 4.0           # Grau do polinômio (2 ou 3 são comuns)
+    sigma_max = 500.0  # Força máxima da absorção nas bordas extremas (sigma_0 da imagem)
+    L = 0.3           # Limite do domínio físico (onde a PML começa)
+
+    # Inicializando matrizes de zeros com o tamanho da malha
+    sigmax = np.zeros_like(malha.x)
+    sigmay = np.zeros_like(malha.y)
+    sigmaz = np.zeros_like(malha.z)
+    dx_sigmax = np.zeros_like(malha.x)
+    dy_sigmay = np.zeros_like(malha.y)
+    dz_sigmaz = np.zeros_like(malha.z)
+
+    # --- Construindo a Esponja em X ---
+    # Região Direita (x >= 1)
+    mask_rx = malha.x >= L
+    sigmax[mask_rx] = sigma_max * (malha.x[mask_rx] - L)**p
+    dx_sigmax[mask_rx] = p * sigma_max * (malha.x[mask_rx] - L)**(p-1)
+
+    # Região Esquerda (x <= -1)
+    # Usamos np.abs para garantir que a base seja positiva antes de elevar a 'p'
+    mask_lx = malha.x <= -L
+    dist_lx = np.abs(malha.x[mask_lx] + L)
+    sigmax[mask_lx] = sigma_max * (dist_lx)**p
+    dx_sigmax[mask_lx] = -p * sigma_max * (dist_lx)**(p-1) # Derivada direcional em x
+
+    # --- Construindo a Esponja em Y ---
+    # Região Superior (y >= 1)
+    mask_ry = malha.y >= L
+    sigmay[mask_ry] = sigma_max * (malha.y[mask_ry] - L)**p
+    dy_sigmay[mask_ry] = p * sigma_max * (malha.y[mask_ry] - L)**(p-1)
+
+    # Região Inferior (y <= -1)
+    mask_ly = malha.y <= -L
+    dist_ly = np.abs(malha.y[mask_ly] + L)
+    sigmay[mask_ly] = sigma_max * (dist_ly)**p
+    dy_sigmay[mask_ly] = -p * sigma_max * (dist_ly)**(p-1)
+
+    # --- Construindo a Esponja em Z ---
+    # Região Superior (z >= 1)
+    mask_rz = malha.z >= L
+    sigmaz[mask_rz] = sigma_max * (malha.z[mask_rz] - L)**p
+    dz_sigmaz[mask_rz] = p * sigma_max * (malha.z[mask_rz] - L)**(p-1)
+
+    # Região Inferior (z <= -1)
+    mask_lz = malha.z <= -L
+    dist_lz = np.abs(malha.z[mask_lz] + L)
+    sigmaz[mask_lz] = sigma_max * (dist_lz)**p
+    dz_sigmaz[mask_lz] = -p * sigma_max * (dist_lz)**(p-1)
+
+    return sigmax, sigmay, sigmaz, dx_sigmax, dy_sigmay, dz_sigmaz
+
+def MaxwellRHS3D_PML(Hx,Hy,Hz,Ex,Ey,Ez,malha,time):
+
+    Hx_flat = Hx.ravel(order='F')
+    Hy_flat = Hy.ravel(order='F')
+    Hz_flat = Hz.ravel(order='F')
+    Ex_flat = Ex.ravel(order='F')
+    Ey_flat = Ey.ravel(order='F')
+    Ez_flat = Ez.ravel(order='F')
+
+    # Armazena as diferenças de campos nas faces
+    dHx = Hx_flat[malha.vmapP] - Hx_flat[malha.vmapM]
+    dHy = Hy_flat[malha.vmapP] - Hy_flat[malha.vmapM]
+    dHz = Hz_flat[malha.vmapP] - Hz_flat[malha.vmapM]
+    dEx = Ex_flat[malha.vmapP] - Ex_flat[malha.vmapM]
+    dEy = Ey_flat[malha.vmapP] - Ey_flat[malha.vmapM]
+    dEz = Ez_flat[malha.vmapP] - Ez_flat[malha.vmapM]
+
+    # Condição de contorno PEC (Ez+ = - Ez-)
+    dHx[malha.mapB] = 0
+    dHy[malha.mapB] = 0
+    dHz[malha.mapB] = 0
+    dEx[malha.mapB] = -2*Ex_flat[malha.vmapB]
+    dEy[malha.mapB] = -2*Ey_flat[malha.vmapB]
+    dEz[malha.mapB] = -2*Ez_flat[malha.vmapB]
+
+    return rhsHx, rhsHy, rhsHz, rhsEx, rhsEy, rhsEz
+
 def MaxwellRHS3D_PEC(Hx,Hy,Hz,Ex,Ey,Ez,malha,time):
     '''Calcula o lado direito das equações de Maxwell na formulação do DG3D'''
 
