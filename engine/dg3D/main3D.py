@@ -5,7 +5,7 @@ from mesh_reader3D import MeshReader3D
 
 N = 3
 
-VX, VY, VZ, EToV = MeshReader3D('engine/dg3D/malhas3D/cavidade3D.msh')
+VX, VY, VZ, EToV = MeshReader3D('engine/dg3D/malhas3D/cavidade3D_grossa.msh')
 
 malha = StartUp3D(N,EToV,VX,VY,VZ)
 
@@ -40,3 +40,6 @@ erro_L2_real = En / wt
 
 print(f't_f = {t_final:.2f}')
 print(f'L2 error for Ez: {erro_L2_real:.3e}')
+
+#t_f = 0.50
+#L2 error for Ez: 3.726e-04

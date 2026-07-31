@@ -1,0 +1,12 @@
+Taxa de Convergência Espectral 3D (Sigma):
+De N=1 para N=2 -> taxa sigma = 2.43
+De N=2 para N=3 -> taxa sigma = 1.90
+De N=3 para N=4 -> taxa sigma = 2.09
+De N=4 para N=5 -> taxa sigma = 2.00
+
+
+Para N = 1 -> erro = 5.08e-01
+Para N = 2 -> erro = 4.48e-02
+Para N = 3 -> erro = 6.72e-03
+Para N = 4 -> erro = 8.29e-04
+Para N = 5 -> erro = 1.13e-04

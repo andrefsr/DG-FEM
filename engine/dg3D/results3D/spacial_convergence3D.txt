@@ -1,0 +1,10 @@
+Ordem de Convergência Espacial (k):
+De lc = 0.5 para 0.4 -> Ordem = 2.78
+De lc = 0.4 para 0.3 -> Ordem = 3.03
+De lc = 0.3 para 0.2 -> Ordem = 3.30
+
+
+Para h = 2.770984e-01 -> erro = 8.15e-02
+Para h = 2.287904e-01 -> erro = 4.78e-02
+Para h = 1.714993e-01 -> erro = 2.00e-02
+Para h = 1.194574e-01 -> erro = 6.04e-03
