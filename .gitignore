@@ -7,3 +7,4 @@ engine/dg3D/__pycache__
 *.pyo
 *.pyd
 to_do.txt
+*.vtu

@@ -1,6 +1,18 @@
 import numpy as np
-from . import aux_func as aux
-from . import Nodes
+
+try:
+    # Tenta importar como pacote (quando chamado pelo main3D)
+    from . import aux_func as aux
+except ImportError:
+    # Se der erro, importa como script local (quando rodando o main2d)
+    import aux_func as aux
+
+try:
+    # Tenta importar como pacote (quando chamado pelo main3D)
+    from . import Nodes
+except ImportError:
+    # Se der erro, importa como script local (quando rodando o main2d)
+    import Nodes
 
 def Vandermonde2D(N,r,s):
     # Inivializa a matriz de Vandermonde onde

@@ -1,7 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.special as sp
-from . import aux_func as aux
+
+try:
+    # Tenta importar como pacote (quando chamado pelo main3D)
+    from . import aux_func as aux
+except ImportError:
+    # Se der erro, importa como script local (quando rodando o main2d)
+    import aux_func as aux
 
 def rstoab(r, s): 
     # Transfere as coordenadas de referências (r,s) para um quadrado em (a,b) onde é mais fácil criar bases ortogonais

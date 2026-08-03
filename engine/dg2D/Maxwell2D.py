@@ -108,10 +108,10 @@ def MaxwellRhs2D_PML(Hx, Hy, Ez, Px, Py, Qx, Qy, malha, time, sigmax, sigmay, dx
     ######################
     #f = 2
     #rhsEz += 2*np.pi*f*np.sin(2.0 * np.pi * f * time)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
-    #t0 = 0.5  # Instante em que o pulso atinge o pico
-    #tau = 0.2
+    t0 = 0.5  # Instante em que o pulso atinge o pico
+    tau = 0.2
 
-    #rhsEz += -2.0 * (time - t0) / (tau**2) * np.exp(-((time - t0) / tau)**2)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
+    rhsEz += -2.0 * (time - t0) / (tau**2) * np.exp(-((time - t0) / tau)**2)*np.exp(-(malha.x**2 + malha.y**2) / 0.1**2)
 
     return rhsHx, rhsHy, rhsEz, rhsPx, rhsPy, rhsQx, rhsQy
 
