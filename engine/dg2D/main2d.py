@@ -22,7 +22,7 @@ Ez = np.zeros((malha.Np,malha.K))
 Hx = np.zeros((malha.Np,malha.K))
 Hy = np.zeros((malha.Np,malha.K))
 
-FinalTime = 2.5
+FinalTime = 5
 Hx, Hy, Ez, pp, t, _ = Max.Maxwell2D(Hx,Hy,Ez,FinalTime,malha,CFL=0.2,pml=True)
 
 ###########################################################################################################################
@@ -65,7 +65,7 @@ if node == True:
 
     plt.show()
 
-ani = True
+ani = False
 if ani == True:
     c0 = 299792458.0 # Velocidade da luz para o tempo físico
 

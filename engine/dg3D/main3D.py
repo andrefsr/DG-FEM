@@ -22,7 +22,7 @@ Ex = np.zeros((malha.Np,malha.K))
 Ey = np.zeros((malha.Np,malha.K))
 
 FinalTime = 2.5
-Hx, Hy, Hz, Ex, Ey, Ez, t_final = Maxwell3D(Hx,Hy,Hz,Ex,Ey,Ez,FinalTime,malha,CFL=0.8,pml=True)
+Hx, Hy, Hz, Ex, Ey, Ez, t_final = Maxwell3D(Hx,Hy,Hz,Ex,Ey,Ez,FinalTime,malha,CFL=0.8,pml=False)
 
 ##############
 
